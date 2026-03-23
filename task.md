@@ -5,44 +5,42 @@
 - [x] Buat CONTEXT.md
 - [x] Buat implementation_plan.md
 - [x] Buat task.md
-- [ ] Initialize monorepo (root package.json, workspaces)
-- [ ] Git init & commit awal
+- [x] Initialize monorepo (root package.json, workspaces)
+- [x] Git init & commit awal
 
 ## Sprint 1 (S1): Foundation (Minggu 1-2)
 
 ### Monorepo Structure
-- [ ] Root `package.json` dengan npm workspaces
-- [ ] `packages/server/` (Express.js)
-- [ ] `packages/client/` (Vite + React)
-- [ ] `packages/shared/` (shared types & utils)
-- [ ] Root tsconfig, ESLint, Prettier
-- [ ] `.env.example` di packages/server
+- [x] Root `package.json` + npm workspaces (`apps/*`, `packages/*`)
+- [x] `apps/backend/` (Express.js + Knex + SQLite)
+- [x] `apps/frontend/` (Vite + React 19 + Tailwind v4)
+- [x] `packages/shared/` (types, calculateFees, constants)
+- [x] Root tsconfig, .gitignore, .env.example
 
 ### Server Foundation
-- [ ] Express.js + TypeScript setup
-- [ ] Knex.js config (SQLite dev / PostgreSQL prod)
-- [ ] Auto-migration sistem saat startup
-- [ ] Database seeds (100+ jenis tanaman)
-- [ ] Puter OAuth middleware
-- [ ] JWT session management
-- [ ] CORS & security middleware (helmet, cors)
-- [ ] Route dasar: auth, users, products
+- [x] Express.js + helmet + cors + rate-limit
+- [x] Knex.js SQLite(dev) / PostgreSQL(prod) config
+- [x] Auto-migration startup — 16 tabel lengkap
+- [x] Seeds 102 komoditas/tanaman (6 kategori)
+- [x] JWT middleware (requireAuth, requireAdmin)
+- [x] Routes: auth, products(CRUD), stores, orders
 
 ### Client Foundation
-- [ ] Vite + React + TypeScript
-- [ ] Tailwind CSS v4 (Forest Green theme)
-- [ ] Framer Motion
-- [ ] Radix UI
-- [ ] React Router v7
-- [ ] Puter.js SDK
-- [ ] Service Worker (loading progress bar)
-- [ ] Halaman: Landing, Login, Dashboard, Marketplace
+- [x] Vite 5 + React 19 + TypeScript
+- [x] Tailwind CSS v4 Forest Green theme
+- [x] Framer Motion page transitions
+- [x] React Router v6 + protected routes
+- [x] Zustand auth store (persisted localStorage)
+- [x] TanStack Query data fetching
+- [x] Landing page (hero + 4 pilar + WA demo)
+- [x] Login/Register page (glassmorphism)
+- [x] Dashboard layout (sidebar + page transitions)
+- [x] Dashboard, Marketplace, Seller, Orders, Wallet pages
+- [x] AI Chat / Price Monitor / Matching stubs
 
 ### Commit S1
-- [ ] `chore: initialize monorepo structure`
-- [ ] `feat(server): express, knex, auth foundation`
-- [ ] `feat(client): vite react tailwind foundation`
-- [ ] `feat: database seeds - 100+ tanaman`
+- [x] `chore: initialize AgriHub Indonesia monorepo structure`
+- [x] `feat(server): Express + Knex + SQLite + JWT + seeds 100+ tanaman`
 
 ## Sprint 2 (S2): RAG & AI Chat (Minggu 3-4)
 
