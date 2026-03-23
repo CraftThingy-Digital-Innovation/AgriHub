@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 async function createAdmin() {
-  const phone = '08123456789';
+  const phone = '085188000139';
   const name = 'Super Admin AgriHub';
   const password = 'adminagrihub123';
   const passwordHash = await bcrypt.hash(password, 10);
