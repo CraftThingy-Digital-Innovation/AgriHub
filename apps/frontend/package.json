@@ -20,6 +20,7 @@
     "framer-motion": "^11.1.1",
     "leaflet": "^1.9.4",
     "puter": "^1.0.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^4.2.1",
@@ -28,6 +29,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
     "@types/leaflet": "^1.9.12",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -35,7 +37,6 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^4.0.0",
-    "@tailwindcss/vite": "^4.2.2",
     "typescript": "^5.4.5",
     "vite": "^5.2.8"
   }

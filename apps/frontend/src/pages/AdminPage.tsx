@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../lib/api';
+import { QRCodeSVG } from 'qrcode.react';
 
 type AdminTab = 'dashboard' | 'wa' | 'users' | 'rag' | 'komoditas' | 'migration';
 
@@ -151,9 +152,14 @@ function WATab() {
       </p>
 
       {status?.hasQR && (
-        <div className="bg-white border-2 border-green-200 rounded-xl p-4 mb-5 inline-block font-mono text-xs text-left overflow-auto max-w-full">
-          <p className="text-green-600 text-center text-xs mb-2">QR Code muncul di terminal backend</p>
-          <code className="text-[10px] text-green-800 whitespace-pre-wrap break-all">{status.qrCode.slice(0, 80)}...</code>
+        <div className="bg-white border-2 border-green-200 rounded-2xl p-6 mb-6 inline-block shadow-sm">
+          <p className="text-green-600 text-center text-sm font-semibold mb-4">Scan QR Code</p>
+          <div className="bg-white p-2 rounded-lg">
+            <QRCodeSVG value={status.qrCode} size={200} level="M" includeMargin={false} />
+          </div>
+          <p className="text-[10px] text-green-400 mt-4 max-w-[200px] mx-auto break-all font-mono opacity-50">
+            {status.qrCode.slice(0, 40)}...
+          </p>
         </div>
       )}
 
