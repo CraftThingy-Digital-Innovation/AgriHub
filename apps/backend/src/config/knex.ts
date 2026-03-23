@@ -1,5 +1,9 @@
 import knex from 'knex';
 import path from 'path';
+import * as dotenv from 'dotenv';
+
+// Pastikan .env diload khusus saat file ini di-execute standalone
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const client = process.env.DATABASE_CLIENT || 'sqlite3';
 
@@ -24,9 +28,11 @@ const config: knex.Knex.Config = client === 'sqlite3'
       connection: process.env.DATABASE_URL,
       migrations: {
         directory: path.resolve(__dirname, '../db/migrations'),
+        extension: 'ts',
       },
       seeds: {
         directory: path.resolve(__dirname, '../db/seeds'),
+        extension: 'ts',
       },
     };
 
