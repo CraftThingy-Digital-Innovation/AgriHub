@@ -6,8 +6,10 @@ import axios from 'axios';
 
 export async function parsePdf(filePath: string): Promise<string> {
   try {
-    // Dynamic import karena pdf-parse bisa gagal saat build
-    const pdfParse = (await import('pdf-parse')).default;
+    // Import dari path internal untuk avoid bug ./stubFalse di Node.js 24
+    // pdf-parse default export coba require('./test/unit/mocks/pdf.js') saat top-level import
+    const pdfParsePath = require.resolve('pdf-parse/lib/pdf-parse.js');
+    const pdfParse = require(pdfParsePath);
     const buffer = fs.readFileSync(filePath);
     const data = await pdfParse(buffer);
     return data.text;
