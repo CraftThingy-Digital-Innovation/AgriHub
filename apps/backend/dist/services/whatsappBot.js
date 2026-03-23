@@ -116,14 +116,23 @@ async function getWAPairingCode(phoneNumber) {
     // baru kita bersihkan session lama.
     try {
         if (fs_1.default.existsSync(AUTH_DIR)) {
-            // Hanya hapus jika TIDAK sedang terhubung atau nomor berbeda
-            const currentAuth = JSON.parse(fs_1.default.readFileSync(path_1.default.join(AUTH_DIR, 'creds.json'), 'utf-8') || '{}');
-            const currentPhone = currentAuth.me?.id?.split(':')[0];
-            if (!isConnected || currentPhone !== cleanPhone) {
+            const credsReqPath = path_1.default.join(AUTH_DIR, 'creds.json');
+            let currentPhone = null;
+            if (fs_1.default.existsSync(credsReqPath)) {
+                const fileContent = fs_1.default.readFileSync(credsReqPath, 'utf-8');
+                if (fileContent && fileContent.trim()) {
+                    const currentAuth = JSON.parse(fileContent);
+                    currentPhone = currentAuth.me?.id?.split(':')[0];
+                }
+            }
+            if (!isConnected || (currentPhone && currentPhone !== cleanPhone)) {
                 console.log('🧹 Menghapus session lama karena nomor berbeda atau status disconnect...');
                 if (waSocket) {
-                    waSocket.ev.removeAllListeners('connection.update');
-                    waSocket.end(undefined);
+                    try {
+                        waSocket.ev.removeAllListeners('connection.update');
+                        waSocket.end(undefined);
+                    }
+                    catch { }
                     waSocket = null;
                 }
                 const files = fs_1.default.readdirSync(AUTH_DIR);
@@ -141,7 +150,7 @@ async function getWAPairingCode(phoneNumber) {
         }
     }
     catch (err) {
-        console.error('⚠️ Gagal memvalidasi/membersihkan session lama:', err);
+        console.warn('⚠️ Gagal memvalidasi/membersihkan session lama (diabaikan):', err.message);
     }
     // Mulai socket baru jika belum ada atau baru saja dihapus
     if (!waSocket) {
