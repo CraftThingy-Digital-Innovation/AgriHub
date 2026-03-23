@@ -6,6 +6,8 @@ import makeWASocket, {
   WASocket,
 } from 'baileys';
 import { Boom } from '@hapi/boom';
+import pino from 'pino';
+import qrcodeTerminal from 'qrcode-terminal';
 import path from 'path';
 import fs from 'fs';
 import db from '../config/knex';
@@ -22,6 +24,9 @@ let waSocket: WASocket | null = null;
 let isConnected = false;
 let qrCode = '';
 
+// Pino logger silent — tidak spam terminal
+const logger = pino({ level: 'silent' });
+
 // ─── Connect ke WhatsApp ──────────────────────────────────────────────────
 export async function connectWhatsApp(): Promise<void> {
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -30,8 +35,7 @@ export async function connectWhatsApp(): Promise<void> {
   waSocket = makeWASocket({
     version,
     auth: state,
-    printQRInTerminal: true,
-    logger: undefined as unknown as import('pino').Logger,
+    logger,
   });
 
   waSocket.ev.on('creds.update', saveCreds);
@@ -39,7 +43,8 @@ export async function connectWhatsApp(): Promise<void> {
   waSocket.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       qrCode = qr;
-      console.log('📱 Scan QR Code AgriHub WhatsApp Bot dengan HP Anda');
+      console.log('\n📱 Scan QR Code AgriHub WhatsApp Bot:\n');
+      qrcodeTerminal.generate(qr, { small: true });
     }
     if (connection === 'close') {
       isConnected = false;
