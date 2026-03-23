@@ -243,8 +243,8 @@ async function handleMessage(msg) {
     const botFullId = waSocket?.user?.id || '';
     const botId = botFullId.split('@')[0].split(':')[0] || '';
     const botLidFull = waSocket?.user?.lid || '';
-    const botLid = botLidFull.split('@')[0] || '';
-    const botJids = [botFullId, botId + '@s.whatsapp.net', botLidFull].filter(Boolean);
+    const botLid = botLidFull.split('@')[0].split(':')[0] || '';
+    const botJids = [botFullId, botId + '@s.whatsapp.net', botLidFull, botLid + '@lid'].filter(Boolean);
     const contextInfo = msg.message?.extendedTextMessage?.contextInfo ||
         msg.message?.imageMessage?.contextInfo ||
         msg.message?.videoMessage?.contextInfo ||
