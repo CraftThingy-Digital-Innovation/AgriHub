@@ -52,11 +52,11 @@ const config = client === 'sqlite3'
         useNullAsDefault: true,
         migrations: {
             directory: path_1.default.resolve(__dirname, '../db/migrations'),
-            extension: 'ts',
+            extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
         },
         seeds: {
             directory: path_1.default.resolve(__dirname, '../db/seeds'),
-            extension: 'ts',
+            extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
         },
     }
     : {
@@ -64,11 +64,11 @@ const config = client === 'sqlite3'
         connection: process.env.DATABASE_URL,
         migrations: {
             directory: path_1.default.resolve(__dirname, '../db/migrations'),
-            extension: 'ts',
+            extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
         },
         seeds: {
             directory: path_1.default.resolve(__dirname, '../db/seeds'),
-            extension: 'ts',
+            extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
         },
     };
 exports.knexConfig = config;
