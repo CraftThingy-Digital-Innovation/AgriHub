@@ -10,25 +10,36 @@ async function createAdmin() {
   const passwordHash = await bcrypt.hash(password, 10);
 
   try {
-    const existing = await db('users').where({ role: 'admin' }).first();
-    if (existing) {
-      console.log('✅ Admin account already exists:', existing.phone);
-      process.exit(0);
+    const hasTable = await db.schema.hasTable('users');
+    if (!hasTable) {
+      console.log('⚠️  Users table does not exist yet. Please ensure migrations have run successfully first.');
+      process.exit(1);
     }
 
-    const id = uuidv4();
-    await db('users').insert({
-      id,
-      phone,
-      name,
-      password_hash: passwordHash,
-      role: 'admin',
-      is_verified: true,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
+    const existing = await db('users').where({ phone }).first();
+    
+    if (existing) {
+      await db('users').where({ phone }).update({
+        role: 'admin',
+        is_verified: true,
+        updated_at: new Date(),
+      });
+      console.log('✅ Admin account updated to superadmin:', phone);
+    } else {
+      const id = uuidv4();
+      await db('users').insert({
+        id,
+        phone,
+        name,
+        password_hash: passwordHash,
+        role: 'admin',
+        is_verified: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      console.log('🚀 Superadmin created successfully!');
+    }
 
-    console.log('🚀 Superadmin created successfully!');
     console.log('📱 Phone:', phone);
     console.log('🔑 Password:', password);
     process.exit(0);
