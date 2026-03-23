@@ -71,7 +71,8 @@ app.get('/api/wa/status', (_req, res) => res.json({ success: true, data: getWASt
 
 // ── Serve Vite Build (Production) ─────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.resolve(__dirname, '../../frontend/dist');
+  // Lokasi 'public' ada di folder yang sama dengan entry file di server
+  const distPath = path.resolve(__dirname, 'public');
   const fs = require('fs');
   
   if (fs.existsSync(distPath)) {
@@ -81,7 +82,8 @@ if (process.env.NODE_ENV === 'production') {
     });
     console.log(`🌾  Serving frontend from: ${distPath}`);
   } else {
-    console.log('⚠️  Frontend dist not found, running in headless API mode.');
+    // Fallback if public folder is missing
+    console.log('⚠️  Frontend public folder not found, running in headless API mode.');
     app.get('/', (_req, res) => {
       res.json({ 
         success: true, 
