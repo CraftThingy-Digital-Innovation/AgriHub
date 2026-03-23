@@ -104,19 +104,41 @@ async function connectWhatsApp() {
  * Alternatif untuk scan QR bagi kamera rusak
  */
 async function getWAPairingCode(phoneNumber) {
-    if (!waSocket) {
-        await connectWhatsApp();
-    }
+    // Pastikan socket ada dan tidak dalam status terhubung
     if (isConnected) {
         throw new Error('WhatsApp sudah terhubung. Logout dulu jika ingin ganti akun.');
+    }
+    // Jika socket belum ada, atau sedang error, buat baru
+    if (!waSocket) {
+        console.log('🔄 Memulai socket baru untuk pairing code...');
+        await connectWhatsApp();
+        // Beri jeda sebentar agar socket terinisialisasi
+        await new Promise(resolve => setTimeout(resolve, 2000));
     }
     // Bersihkan nomor (hanya angka)
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
     if (!cleanPhone)
         throw new Error('Nomor HP tidak valid');
     console.log(`🔑 Meminta Pairing Code untuk: ${cleanPhone}`);
-    const code = await waSocket.requestPairingCode(cleanPhone);
-    return code;
+    try {
+        const socket = waSocket;
+        if (!socket)
+            throw new Error('Gagal menginisialisasi socket WhatsApp');
+        const code = await socket.requestPairingCode(cleanPhone);
+        return code;
+    }
+    catch (err) {
+        console.error('❌ Error saat meminta pairing code:', err);
+        // Jika gagal, coba sekali lagi dengan reset socket
+        console.log('🔄 Mencoba reset socket dan minta ulang...');
+        waSocket = null;
+        await connectWhatsApp();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const socketRetry = waSocket;
+        if (!socketRetry)
+            throw new Error('Gagal mereset socket WhatsApp');
+        return await socketRetry.requestPairingCode(cleanPhone);
+    }
 }
 function getWAStatus() {
     return { isConnected, hasQR: !!qrCode, qrCode };
