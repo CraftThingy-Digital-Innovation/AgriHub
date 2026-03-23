@@ -15,6 +15,7 @@ export interface User {
   is_verified: boolean;
   puter_user_id?: string;
   puter_token?: string | null;
+  whatsapp_lid?: string | null;
   created_at: string;
   updated_at: string;
 }
