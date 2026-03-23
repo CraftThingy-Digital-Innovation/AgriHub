@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
@@ -21,7 +22,38 @@ function StatCard({ icon, label, value, change, up }: { icon: string; label: str
 }
 
 export default function DashboardPage() {
+  const [searchParams] = useSearchParams();
   const user = useAuthStore(s => s.user);
+  const updateUser = useAuthStore(s => s.updateUser);
+  const isPuterConnected = !!user?.puter_token;
+
+  // Hubungkan ke Puter API (Duplikat logic dari ChatPage agar mandiri)
+  async function connectPuter() {
+    try {
+      // @ts-ignore
+      if (!window.puter) { 
+        alert('Puter.js belum dimuat. Mohon tunggu sebentar atau muat ulang halaman.'); 
+        return; 
+      }
+      // @ts-ignore
+      await window.puter.auth.signIn();
+      // @ts-ignore
+      const token = window.puter.auth.getToken();
+      if (token) {
+        await api.patch('/auth/puter-token', { token });
+        updateUser({ puter_token: token as string });
+      }
+    } catch (err) {
+      console.error('Failed to connect Puter:', err);
+      alert('Gagal menghubungkan ke Puter AI');
+    }
+  }
+
+  // Trigger otomatis jika dari WhatsApp
+  if (searchParams.get('action') === 'connect-puter' && !isPuterConnected) {
+    // Jalankan setelah render pertama selesai
+     setTimeout(() => connectPuter(), 500);
+  }
 
   const { data: wallet } = useQuery({
     queryKey: ['wallet'],
@@ -39,7 +71,43 @@ export default function DashboardPage() {
   const formatRp = (n: number) => `Rp${n?.toLocaleString('id-ID') ?? '0'}`;
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto relative">
+      <AnimatePresence>
+        {!isPuterConnected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] backdrop-blur-md bg-green-900/40 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card max-w-sm w-full p-8 text-center"
+            >
+              <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl animate-bounce">🔌</div>
+              <h2 className="text-2xl font-bold text-green-900 mb-3">Hubungkan Akun</h2>
+              <p className="text-green-700 text-sm mb-8">
+                Untuk menjaga keamanan dan kredensial AI Anda, silakan hubungkan akun AgriHub ke sistem **Puter.js** sebelum melanjutkan ke Dashboard.
+              </p>
+              
+              <button 
+                onClick={connectPuter}
+                className="btn-primary w-full justify-center py-4 text-lg shadow-lg hover:scale-105 active:scale-95 transition-all mb-4"
+              >
+                🚀 Hubungkan Sekarang
+              </button>
+
+              <a 
+                href="https://wa.me/6285188000139" 
+                className="text-xs text-green-600 hover:text-green-800 font-medium"
+              >
+                ← Kembali ke WhatsApp
+              </a>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Greeting */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-green-900">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>

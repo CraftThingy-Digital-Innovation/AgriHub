@@ -1,12 +1,21 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
 import api from '../lib/api';
 
 export default function LoginPage() {
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [form, setForm] = useState({ phone: '', name: '', password: '' });
+
+  useEffect(() => {
+    const phone = searchParams.get('phone');
+    const m = searchParams.get('mode');
+    if (phone) setForm(f => ({ ...f, phone }));
+    if (m === 'register') setMode('register');
+  }, [searchParams]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { setAuth } = useAuthStore();
