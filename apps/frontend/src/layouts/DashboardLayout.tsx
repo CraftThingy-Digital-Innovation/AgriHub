@@ -44,7 +44,6 @@ export default function DashboardLayout() {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map(item => (
             <NavLink
@@ -59,6 +58,13 @@ export default function DashboardLayout() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          {/* Admin-only link */}
+          {user?.role === 'admin' && (
+            <NavLink to="/app/admin" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''} border-t border-red-100 mt-2 pt-2 text-red-600`}>
+              <span className="text-base">⚙️</span>
+              <span>Superadmin</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* User Profile */}
