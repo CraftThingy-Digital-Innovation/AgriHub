@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
+import { useAuthStore } from '../stores/authStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,10 @@ export default function ChatPage() {
   const [docTitle, setDocTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const user = useAuthStore(s => s.user);
+  const updateUser = useAuthStore(s => s.updateUser);
+  const isPuterConnected = !!user?.puter_token;
 
   // Auto-scroll
   useEffect(() => {
@@ -141,6 +146,25 @@ export default function ChatPage() {
     mutationFn: (id: string) => api.delete(`/rag/documents/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['rag-docs'] }),
   });
+
+  // Hubungkan ke Puter API
+  async function connectPuter() {
+    try {
+      // @ts-ignore
+      if (!window.puter) { alert('Puter.js belum dimuat. Coba refresh halaman.'); return; }
+      // @ts-ignore
+      await window.puter.auth.signIn();
+      // @ts-ignore
+      const token = window.puter.auth.getToken();
+      if (token) {
+        await api.patch('/auth/puter-token', { token });
+        updateUser({ puter_token: token as string });
+      }
+    } catch (err) {
+      console.error('Failed to connect Puter:', err);
+      alert('Gagal menghubungkan ke Puter AI');
+    }
+  }
 
   // Send message with SSE streaming
   async function sendMessage() {
@@ -218,7 +242,7 @@ export default function ChatPage() {
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: '❌ Gagal menghubungi AI. Pastikan server berjalan dan PUTER_API_KEY sudah dikonfigurasi.',
+          content: '❌ Gagal menghubungi AI. Pastikan server berjalan dan Anda sudah menghubungkan akun Puter AI Anda di tab Pengaturan.',
           timestamp: new Date(),
         }]);
       } finally {
@@ -257,8 +281,25 @@ export default function ChatPage() {
 
         <AnimatePresence mode="wait">
           {activeTab === 'chat' ? (
-            <motion.div key="chat-settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card flex-1 p-4 space-y-4">
-              <h3 className="font-bold text-green-900 text-sm">⚙️ Pengaturan Chat</h3>
+            <motion.div key="chat-settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card flex-1 p-4 flex flex-col gap-4">
+              <h3 className="font-bold text-green-900 text-sm">⚙️ Pengaturan AI</h3>
+              
+              {/* Puter AI Connection Status */}
+              <div className="bg-green-50 rounded-xl p-3 border border-green-100 mb-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-3 h-3 rounded-full ${isPuterConnected ? 'bg-green-500' : 'bg-red-400'}`}></div>
+                  <div className="font-bold text-sm text-green-900">Koneksi Puter AI</div>
+                </div>
+                {isPuterConnected ? (
+                  <p className="text-xs text-green-700 mb-2">✅ Akun Anda sudah terhubung ke Puter AI. Anda bisa menggunakan AI tanpa batas!</p>
+                ) : (
+                  <>
+                    <p className="text-xs text-green-600 mb-3">⚠️ Anda belum menghubungkan akun Puter. AI tidak akan merespon pertanyaan Anda.</p>
+                    <button onClick={connectPuter} className="btn-primary py-1.5 px-3 text-xs w-full justify-center">🔗 Hubungkan Puter sekarang</button>
+                  </>
+                )}
+              </div>
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => setUseRag(!useRag)}
