@@ -476,7 +476,14 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
          // Private Chat: Check user sendiri (user sudah di-resolve di atas)
          if (!user) {
            const senderPhone = sender.split('@')[0].replace(/[^0-9]/g, '');
-           await sendWAMessage(jid, `👋 *Halo! Sepertinya Anda belum terdaftar atau identitas WA Anda belum tertaut.*\n\n✅ *Sudah punya akun?*\nKetik: **LINK [NomorHP]**\n_(Contoh: LINK 0812345678)_\n\n🆕 *Belum punya akun?*\nDaftar di: https://agrihub.id/login?mode=register&phone=${senderPhone}`);
+           // Cek apakah nomor ini sudah ada di DB (tapi LID belum tertaut)
+           const exists = await db('users').where('phone', 'like', `%${senderPhone.slice(-9)}%`).first();
+           
+           if (exists) {
+              await sendWAMessage(jid, `👋 *Halo ${exists.name}! Sepertinya Anda sudah terdaftar, namun identitas WhatsApp ini belum tertaut.*\n\nSilakan klik link di bawah untuk login dan menautkan akun secara otomatis:\n👉 https://agrihub.id/login?mode=login&phone=${senderPhone}&action=link&lid=${sender}`);
+           } else {
+              await sendWAMessage(jid, `👋 *Halo! Sepertinya Anda belum terdaftar di AgriHub.*\n\nSilakan daftar di link berikut (Nomor HP & ID WhatsApp akan tertaut otomatis):\n👉 https://agrihub.id/login?mode=register&phone=${senderPhone}&action=link&lid=${sender}`);
+           }
            return;
          }
          if (!user.puter_token) {

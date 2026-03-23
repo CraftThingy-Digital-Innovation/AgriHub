@@ -30,7 +30,19 @@ export default function LoginPage() {
       const { data } = await api.post(endpoint, form);
       if (data.success) {
         setAuth(data.data.user, data.data.token);
-        navigate('/app');
+        
+        // Preserve lid/action for automatic linking on dashboard
+        const lid = searchParams.get('lid');
+        const action = searchParams.get('action');
+        let redirectUrl = '/app';
+        if (lid || action) {
+          const params = new URLSearchParams();
+          if (lid) params.set('lid', lid);
+          if (action) params.set('action', action);
+          redirectUrl += `?${params.toString()}`;
+        }
+        
+        navigate(redirectUrl);
       }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;

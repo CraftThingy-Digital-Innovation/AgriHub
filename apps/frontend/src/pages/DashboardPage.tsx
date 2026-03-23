@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
@@ -55,6 +56,22 @@ export default function DashboardPage() {
      setTimeout(() => connectPuter(), 500);
   }
 
+  // Tautkan WhatsApp LID otomatis
+  const waLidToLink = searchParams.get('lid');
+  const [linkStatus, setLinkStatus] = useState<'idle' | 'linking' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'link' && waLidToLink && linkStatus === 'idle') {
+      setLinkStatus('linking');
+      api.patch('/auth/link-whatsapp', { lid: waLidToLink })
+        .then(() => {
+          setLinkStatus('success');
+          updateUser({ whatsapp_lid: waLidToLink });
+        })
+        .catch(() => setLinkStatus('error'));
+    }
+  }, [searchParams, waLidToLink, linkStatus, updateUser]);
+
   const { data: wallet } = useQuery({
     queryKey: ['wallet'],
     queryFn: () => api.get('/auth/me').then(r => r.data.data.wallet),
@@ -73,6 +90,29 @@ export default function DashboardPage() {
   return (
     <div className="max-w-5xl mx-auto relative">
       <AnimatePresence>
+        {/* Notifikasi Sukses Link WhatsApp */}
+        {linkStatus === 'success' && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed top-20 right-4 z-[1001] bg-white border border-green-100 shadow-2xl rounded-2xl p-4 flex items-center gap-3 max-w-sm"
+          >
+            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl shrink-0">✅</div>
+            <div>
+              <div className="font-bold text-green-900 text-sm">WhatsApp Tertaut!</div>
+              <div className="text-[10px] text-green-600 mb-2">Akun Anda berhasil dihubungkan ke WhatsApp. Silakan kembali ke chat.</div>
+              <a 
+                href="https://wa.me/6285188000139" 
+                className="text-[10px] font-bold text-green-700 bg-green-50 px-2 py-1 rounded-lg hover:bg-green-100 transition-colors"
+              >
+                📱 Kembali ke WhatsApp
+              </a>
+            </div>
+            <button onClick={() => setLinkStatus('idle')} className="text-green-300 hover:text-green-500 ml-2">✕</button>
+          </motion.div>
+        )}
+
         {!isPuterConnected && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -86,9 +126,9 @@ export default function DashboardPage() {
               className="glass-card max-w-sm w-full p-8 text-center"
             >
               <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl animate-bounce">🔌</div>
-              <h2 className="text-2xl font-bold text-green-900 mb-3">Hubungkan Akun</h2>
+              <h2 className="text-2xl font-bold text-green-900 mb-3">Konfigurasi AI</h2>
               <p className="text-green-700 text-sm mb-8">
-                Untuk menjaga keamanan dan kredensial AI Anda, silakan hubungkan akun AgriHub ke sistem **Puter.js** sebelum melanjutkan ke Dashboard.
+                Untuk keamanan data Anda, silakan hubungkan AgriHub ke layanan **Puter.js** sebelum mengakses Dashboard.
               </p>
               
               <button 
@@ -98,12 +138,14 @@ export default function DashboardPage() {
                 🚀 Hubungkan Sekarang
               </button>
 
-              <a 
-                href="https://wa.me/6285188000139" 
-                className="text-xs text-green-600 hover:text-green-800 font-medium"
-              >
-                ← Kembali ke WhatsApp
-              </a>
+              <div className="flex flex-col gap-2">
+                <a 
+                  href="https://wa.me/6285188000139" 
+                  className="text-xs text-green-600 hover:text-green-800 font-medium"
+                >
+                  ← Ke WhatsApp
+                </a>
+              </div>
             </motion.div>
           </motion.div>
         )}

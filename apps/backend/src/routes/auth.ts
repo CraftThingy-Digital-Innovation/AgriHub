@@ -124,4 +124,25 @@ router.patch('/puter-token', requireAuth, async (req: AuthRequest, res: Response
   }
 });
 
+/**
+ * PATCH /api/auth/link-whatsapp
+ * Tautkan WhatsApp LID/JID ke account ini
+ */
+router.patch('/link-whatsapp', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { lid } = req.body;
+    if (!lid) {
+      res.status(400).json({ success: false, error: 'LID tidak ditemukan' });
+      return;
+    }
+    await db('users').where({ id: req.user!.id }).update({
+      whatsapp_lid: lid,
+      updated_at: new Date().toISOString(),
+    });
+    res.json({ success: true, message: 'WhatsApp ID berhasil ditautkan' });
+  } catch {
+    res.status(500).json({ success: false, error: 'Gagal tautkan WhatsApp' });
+  }
+});
+
 export default router;
