@@ -13,7 +13,7 @@
     "declaration": true,
     "sourceMap": true,
     "paths": {
-      "@agrihub/shared": ["../../packages/shared/src"]
+      "@agrihub/shared": ["./src/shared"]
     }
   },
   "include": ["src"],

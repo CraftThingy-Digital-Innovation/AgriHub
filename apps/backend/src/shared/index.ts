@@ -1,4 +1,7 @@
 // ─── Shared Types & Constants for AgriHub Indonesia ───────────────────────
+// File ini sebagai canonical source of truth untuk semua types.
+// Frontend mengaksesnya via vite path alias @agrihub/shared → ../../backend/src/shared
+// Backend mengaksesnya via tsconfig path alias @agrihub/shared → ./shared
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +60,7 @@ export interface Product {
 
 export type OrderStatus =
   | 'pending'
+  | 'menunggu_bayar'
   | 'dibayar'
   | 'diproses'
   | 'dikirim'
@@ -75,18 +79,18 @@ export interface Order {
   unit_price: number;
   total_amount: number;
   platform_fee: number;   // 2% dari total
-  ppn_fee: number;        // 11% × platform_fee
-  midtrans_mdr: number;   // ~0.7%
-  seller_net: number;     // total - fees
+  ppn_amount: number;     // 11% × platform_fee
+  seller_amount: number;  // total - fees
   status: OrderStatus;
-  midtrans_order_id?: string;
-  midtrans_token?: string;
-  payment_method?: string;
+  payment_token?: string;
+  payment_url?: string;
+  payment_status?: string;
+  paid_at?: string;
   shipping_resi?: string;
   shipping_courier?: string;
+  biteship_order_id?: string;
   notes?: string;
   escrow_released_at?: string;
-  dispute_reason?: string;
   created_at: string;
   updated_at: string;
 }
@@ -97,7 +101,7 @@ export interface Wallet {
   id: string;
   user_id: string;
   balance: number;
-  pending_balance: number; // escrow belum release
+  pending_balance: number;  // escrow belum release
   total_earned: number;
   total_withdrawn: number;
   created_at: string;
@@ -107,10 +111,12 @@ export interface Wallet {
 export interface WalletTransaction {
   id: string;
   wallet_id: string;
-  type: 'credit' | 'debit' | 'escrow_hold' | 'escrow_release' | 'withdrawal';
+  order_id?: string;
+  type: 'escrow_in' | 'escrow_release' | 'withdrawal' | 'credit' | 'debit';
   amount: number;
   description: string;
-  reference_id?: string;  // order_id atau withdrawal_id
+  status: 'pending' | 'completed' | 'failed';
+  metadata?: string;
   created_at: string;
 }
 
@@ -118,35 +124,30 @@ export interface WalletTransaction {
 
 export interface SupplyReport {
   id: string;
-  reporter_id: string;
-  komoditas: string;
-  jumlah_kg: number;
-  harga_per_kg: number;
-  kota: string;
+  user_id: string;
+  komoditas_id: string;
+  quantity_kg: number;
+  price_per_kg: number;
   kabupaten: string;
   provinsi: string;
   latitude?: number;
   longitude?: number;
-  tanggal_tersedia: string;
-  is_active: boolean;
-  match_radius_km: number;    // default 200
-  match_price_pct: number;    // default 20 (±20%)
-  match_date_days: number;    // default 7 (±7 hari)
+  available_from: string;
+  available_until?: string;
+  is_matched: boolean;
   created_at: string;
 }
 
 export interface DemandRequest {
   id: string;
-  requester_id: string;
-  komoditas: string;
-  jumlah_kg: number;
-  harga_max_per_kg: number;
-  kota_tujuan: string;
-  deadline: string;
-  is_active: boolean;
-  match_radius_km: number;
-  match_price_pct: number;
-  match_date_days: number;
+  user_id: string;
+  komoditas_id: string;
+  quantity_kg: number;
+  max_price_per_kg: number;
+  kabupaten: string;
+  provinsi: string;
+  needed_by?: string;
+  is_matched: boolean;
   created_at: string;
 }
 
@@ -154,12 +155,11 @@ export interface MatchResult {
   id: string;
   supply_id: string;
   demand_id: string;
-  score: number;          // match quality score 0-100
-  distance_km: number;
-  price_diff_pct: number;
-  is_contacted: boolean;
-  supply?: SupplyReport;
-  demand?: DemandRequest;
+  komoditas_id: string;
+  quantity_matched: number;
+  suggested_price: number;
+  match_score: number;    // 0-100
+  status: 'suggested' | 'accepted' | 'rejected';
   created_at: string;
 }
 
@@ -167,31 +167,42 @@ export interface MatchResult {
 
 export interface PriceHistory {
   id: string;
-  komoditas: string;
-  wilayah: string;
-  harga_per_kg: number;
-  source: string;         // "BPS" | "manual" | "scraper"
-  date: string;
+  komoditas_id: string;
+  price_per_kg: number;
+  kabupaten: string;
+  provinsi: string;
+  source: 'manual' | 'BPS' | 'scraper';
+  recorded_date: string;
+  reporter_id?: string;
 }
 
 export interface PriceAlert {
   id: string;
   user_id: string;
-  komoditas: string;
-  wilayah?: string;
-  condition: 'naik' | 'turun';
+  komoditas_id: string;
+  alert_type: 'above' | 'below';
   threshold_price: number;
+  provinsi?: string;
   is_active: boolean;
   created_at: string;
 }
 
 export interface PricePrediction {
-  komoditas: string;
-  wilayah: string;
-  predicted_price: number;
-  confidence: number;     // 0-1
-  prediction_date: string;
-  generated_at: string;
+  id: string;
+  komoditas_id: string;
+  predictions_json: string;   // JSON array of { date, predicted_price }
+  model_used: string;
+  created_at: string;
+}
+
+// ── Komoditas ────────────────────────────────────────────────────────────
+
+export interface Komoditas {
+  id: string;
+  nama: string;
+  kategori: string;
+  satuan: string;
+  deskripsi?: string;
 }
 
 // ── Shipment / Logistik ───────────────────────────────────────────────────
@@ -199,17 +210,14 @@ export interface PricePrediction {
 export interface ShipmentOrder {
   id: string;
   order_id: string;
-  courier: string;        // "jne", "sicepat", "jnt", dll
-  service_type: string;
-  origin_area_id: string;
-  destination_area_id: string;
-  weight_kg: number;
-  price: number;
-  estimated_days: string;
-  waybill_id?: string;    // nomor resi
+  courier: string;          // "jne", "sicepat", dll
+  service: string;
+  waybill_id?: string;      // nomor resi
+  tracking_id?: string;
   biteship_order_id?: string;
-  status: 'pending' | 'confirmed' | 'picked_up' | 'in_transit' | 'delivered';
+  status: 'booked' | 'picked_up' | 'in_transit' | 'delivered';
   created_at: string;
+  updated_at: string;
 }
 
 // ── RAG / AI ──────────────────────────────────────────────────────────────
@@ -218,11 +226,11 @@ export interface RAGDocument {
   id: string;
   user_id: string;
   title: string;
-  source_type: 'pdf' | 'docx' | 'xlsx' | 'url' | 'youtube' | 'text';
+  source_type: 'pdf' | 'xlsx' | 'url' | 'youtube' | 'text';
   source_url?: string;
   content_preview: string;
   chunk_count: number;
-  is_global: boolean;     // true = tersedia untuk semua user (admin upload)
+  is_global: boolean;
   created_at: string;
 }
 
@@ -230,8 +238,8 @@ export interface RAGDocument {
 
 export interface GroupCredit {
   id: string;
-  group_id: string;       // WhatsApp group JID
-  owner_id: string;       // user_id pemilik grup
+  group_jid: string;
+  owner_id: string;
   credits_balance: number;
   credits_used: number;
   is_ai_enabled: boolean;
@@ -271,34 +279,22 @@ export const MATCH_DEFAULT_PRICE_PCT = 20;
 export const MATCH_DEFAULT_DATE_DAYS = 7;
 
 export const WA_COMMANDS = {
-  // Pilar 1 - Marketplace
   DAFTAR_TOKO: 'DAFTAR TOKO',
   JUAL: 'JUAL',
   STOK: 'STOK',
   CARI: 'CARI',
-  BELI: 'BELI',
   PESANAN: 'PESANAN',
   KONFIRMASI: 'KONFIRMASI',
-  TOLAK: 'TOLAK',
   TERIMA: 'TERIMA',
-  BANDING: 'BANDING',
   SALDO: 'SALDO',
   TARIK: 'TARIK',
-  LAPORAN: 'LAPORAN',
-  BAYAR: 'BAYAR',
-  // Pilar 2 - Matching
   BUTUH: 'BUTUH',
-  CARI_STOK: 'CARI STOK',
-  HUBUNGI: 'HUBUNGI',
-  SKALA_MATCHING: 'SKALA MATCHING',
-  // Pilar 3 - Harga
   CEK: 'CEK',
   ALERT: 'ALERT',
-  INFLASI: 'INFLASI',
-  // Pilar 4 - Logistik
   ONGKIR: 'ONGKIR',
   KIRIM: 'KIRIM',
   CEK_RESI: 'CEK RESI',
+  MENU: 'MENU',
 } as const;
 
 /**
@@ -306,9 +302,9 @@ export const WA_COMMANDS = {
  */
 export function calculateFees(totalAmount: number) {
   const platformFee = Math.round(totalAmount * PLATFORM_FEE_RATE);
-  const ppnFee = Math.round(platformFee * PPN_RATE);
+  const ppnAmount = Math.round(platformFee * PPN_RATE);
   const midtransMdr = Math.round(totalAmount * MIDTRANS_MDR_RATE);
-  const sellerNet = totalAmount - platformFee - ppnFee;
-  const platformRevenue = platformFee - ppnFee;
-  return { platformFee, ppnFee, midtransMdr, sellerNet, platformRevenue };
+  const sellerAmount = totalAmount - platformFee - ppnAmount;
+  const platformRevenue = platformFee - ppnAmount;
+  return { platformFee, ppnAmount, midtransMdr, sellerAmount, platformRevenue };
 }

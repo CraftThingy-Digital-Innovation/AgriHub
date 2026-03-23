@@ -10,7 +10,6 @@
     "seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
-    "@agrihub/shared": "file:../../packages/shared",
     "axios": "^1.6.8",
     "baileys": "^7.0.0-rc.9",
     "sqlite3": "^5.1.7",

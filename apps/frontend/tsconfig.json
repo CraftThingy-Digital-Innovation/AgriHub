@@ -14,7 +14,7 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@agrihub/shared": ["../../packages/shared/src"]
+      "@agrihub/shared": ["../backend/src/shared"]
     }
   },
   "include": ["src"],

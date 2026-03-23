@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@agrihub/shared': path.resolve(__dirname, '../../packages/shared/src'),
+      '@agrihub/shared': path.resolve(__dirname, '../backend/src/shared'),
     },
   },
   server: {
