@@ -39,9 +39,16 @@ function buildProd() {
     const frontendDir = path.join(rootDir, 'apps', 'frontend');
     const backendDir = path.join(rootDir, 'apps', 'backend');
     const frontendDist = path.join(frontendDir, 'dist');
+    const backendDist = path.join(backendDir, 'dist');
     const backendPublic = path.join(backendDir, 'public');
 
     console.log('🚀 Starting Unified Production Build...');
+
+    // 0. Clean old dists
+    if (fs.existsSync(backendDist)) {
+      console.log('🧹 Cleaning old backend dist...');
+      deleteFolderRecursive(backendDist);
+    }
 
     // 1. Build Frontend
     console.log('📦 Step 1: Building Frontend (Vite)...');
