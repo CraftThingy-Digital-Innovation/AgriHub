@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriHub Indonesia — Website Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-50:  #f0faf0;
+    --green-100: #d6f5d6;
+    --green-200: #aaeaaa;
+    --green-400: #4dba4d;
+    --green-600: #2d8c2d;
+    --green-800: #1a5c1a;
+    --green-900: #0d3d0d;
+    --amber-50:  #fffbf0;
+    --amber-100: #fef3cc;
+    --amber-400: #f5c242;
+    --amber-600: #d4980f;
+    --amber-900: #5a3d00;
+    --earth-50:  #faf7f2;
+    --earth-100: #f0e8d8;
+    --earth-400: #c4a87a;
+    --earth-700: #7a5c38;
+    --earth-900: #3d2e18;
+    --sky-50:    #f0f8ff;
+    --sky-400:   #4db8ff;
+    --sky-600:   #1a8fd4;
+    --red-400:   #f05c5c;
+    --red-600:   #c43030;
+    --bg:        #fafaf7;
+    --surface:   #ffffff;
+    --border:    rgba(50,60,30,0.1);
+    --text:      #1a2010;
+    --muted:     #5a6650;
+    --accent:    #2d8c2d;
+    --code-bg:   #f0f4ec;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(160deg, #0d3d0d 0%, #1a5c1a 45%, #2d8c2d 100%);
+    color: white;
+    padding: 80px 48px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(77,186,77,0.2) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(245,194,66,0.15) 0%, transparent 40%);
+  }
+  .hero-inner { position: relative; max-width: 900px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px; padding: 4px 14px;
+    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.85);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 400; line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .hero h1 em { font-style: italic; color: var(--amber-400); }
+  .hero p {
+    font-size: 1.05rem; color: rgba(255,255,255,0.75);
+    max-width: 580px; line-height: 1.65;
+    margin-bottom: 40px;
+  }
+  .hero-stats {
+    display: flex; flex-wrap: wrap; gap: 32px;
+  }
+  .stat { }
+  .stat-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem; color: var(--amber-400); display: block;
+  }
+  .stat-label { font-size: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 32px; }
+  .section { padding: 64px 0; }
+  .section + .section { border-top: 1px solid var(--border); }
+
+  /* ── SECTION HEADER ── */
+  .section-tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--green-600);
+    background: var(--green-50); border: 1px solid var(--green-100);
+    padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 400; line-height: 1.25;
+    color: var(--text); margin-bottom: 8px;
+  }
+  .section-sub { color: var(--muted); max-width: 600px; font-size: 0.95rem; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+  }
+  .card-sm { padding: 18px 22px; border-radius: 12px; }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 32px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 32px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 28px; }
+
+  /* ── FEATURE CARD ── */
+  .feat-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 14px;
+  }
+  .feat-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
+  .feat-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── TECH STACK ── */
+  .tech-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .tech-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px; font-weight: 500;
+    padding: 4px 12px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--code-bg); color: var(--green-800);
+  }
+  .tech-chip.amber { background: var(--amber-50); border-color: var(--amber-100); color: var(--amber-900); }
+  .tech-chip.earth { background: var(--earth-50); border-color: var(--earth-100); color: var(--earth-700); }
+  .tech-chip.sky   { background: var(--sky-50); border-color: #cce8ff; color: var(--sky-600); }
+  .tech-chip.red   { background: #fff5f5; border-color: #ffd5d5; color: var(--red-600); }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: #1a2010;
+    border-radius: 12px;
+    padding: 20px 22px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #c8e6b4;
+    margin: 16px 0;
+    border: 1px solid rgba(77,186,77,0.15);
+  }
+  pre .kw { color: #7dd87d; }
+  pre .str { color: #ffd085; }
+  pre .cm { color: #6a7d58; font-style: italic; }
+  pre .fn { color: #89c4f4; }
+  pre .num { color: #f8b4d9; }
+
+  /* ── FLOW STEP ── */
+  .flow { margin-top: 28px; }
+  .flow-step {
+    display: flex; gap: 16px; padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--green-100); color: var(--green-800);
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .flow-content { flex: 1; }
+  .flow-content strong { display: block; font-size: 0.93rem; margin-bottom: 4px; }
+  .flow-content span { font-size: 0.85rem; color: var(--muted); }
+
+  /* ── PAGE ROUTE CARD ── */
+  .route {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+  }
+  .route-method {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 6px; flex-shrink: 0; margin-top: 2px;
+  }
+  .method-page { background: var(--sky-50); color: var(--sky-600); border: 1px solid #cce8ff; }
+  .method-api  { background: var(--amber-50); color: var(--amber-600); border: 1px solid var(--amber-100); }
+  .method-ws   { background: #fdf0ff; color: #8a30c4; border: 1px solid #e8ccff; }
+  .route-path { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .route-desc { font-size: 0.84rem; color: var(--muted); }
+
+  /* ── DB SCHEMA ── */
+  .schema-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; font-family: 'JetBrains Mono', monospace;
+    margin-top: 12px;
+  }
+  .schema-table th {
+    text-align: left; padding: 8px 12px;
+    background: var(--green-50); color: var(--green-800);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .schema-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .schema-table tr:last-child td { border-bottom: none; }
+  .schema-table .pk { color: var(--amber-600); font-weight: 600; }
+  .schema-table .fk { color: var(--sky-600); }
+  .schema-table .type { color: var(--green-600); }
+  .schema-name { font-weight: 600; font-size: 0.88rem; margin: 20px 0 4px; color: var(--earth-700); }
+  .schema-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+
+  /* ── LOADING BAR DEMO ── */
+  .loadbar-demo {
+    background: #1a2010; border-radius: 12px; padding: 24px 28px;
+    margin-top: 20px; font-family: 'JetBrains Mono', monospace;
+    color: #c8e6b4; font-size: 13px;
+  }
+  .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .lb-title { font-weight: 600; color: #7dd87d; }
+  .lb-stats { font-size: 11px; color: #6a7d58; }
+  .lb-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+  .lb-fill { height: 100%; background: linear-gradient(90deg, #4dba4d, #7dd87d); border-radius: 3px; width: 72%; transition: width 0.4s; }
+  .lb-file-list { font-size: 11px; color: #8aa87a; line-height: 2; }
+  .lb-file { display: flex; justify-content: space-between; }
+  .lb-file.done { color: #6a7d58; text-decoration: line-through; }
+  .lb-file.active { color: #ffd085; }
+
+  /* ── AI MODEL TABLE ── */
+  .ai-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 20px; }
+  .ai-table th { text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--green-100); font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+  .ai-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .ai-table .rec { background: var(--green-50); font-weight: 500; }
+  .ai-table .rec td:first-child { border-left: 3px solid var(--green-400); }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .badge-green { background: var(--green-100); color: var(--green-800); }
+  .badge-amber { background: var(--amber-100); color: var(--amber-900); }
+  .badge-red   { background: #fff0f0; color: var(--red-600); }
+
+  /* ── TIMELINE ── */
+  .timeline { margin-top: 28px; position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 20px; top: 0; bottom: 0; width: 1px; background: var(--green-100); }
+  .tl-item { display: flex; gap: 20px; padding: 0 0 32px; position: relative; }
+  .tl-dot { width: 40px; height: 40px; border-radius: 50%; background: var(--surface); border: 2px solid var(--green-200); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--green-600); flex-shrink: 0; z-index: 1; }
+  .tl-content { flex: 1; padding-top: 8px; }
+  .tl-sprint { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+  .tl-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
+  .tl-tasks { list-style: none; }
+  .tl-tasks li { font-size: 0.84rem; color: var(--muted); padding: 2px 0; padding-left: 12px; position: relative; }
+  .tl-tasks li::before { content: '›'; position: absolute; left: 0; color: var(--green-400); }
+
+  /* ── UI PALETTE ── */
+  .palette { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .swatch { width: 44px; height: 44px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); position: relative; }
+  .swatch::after { content: attr(data-label); position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--muted); white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── PUTER INTEGRATION ── */
+  .puter-block {
+    background: linear-gradient(135deg, #f0faf0 0%, #e8f0ff 100%);
+    border: 1px solid #c8e0ff; border-radius: 16px; padding: 28px 32px;
+    margin-top: 28px;
+  }
+  .puter-block h4 { font-weight: 600; font-size: 1rem; margin-bottom: 8px; color: #1a2060; }
+  .puter-block p { font-size: 0.88rem; color: #3a4870; line-height: 1.65; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px 28px;
+    margin: 40px auto; max-width: 680px;
+  }
+  .toc h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc li { counter-increment: toc; padding: 5px 0; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+  .toc li:last-child { border-bottom: none; }
+  .toc a { color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+  .toc a:hover { color: var(--accent); }
+  .toc a::before { content: counter(toc, decimal-leading-zero); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); min-width: 24px; }
+
+  /* ── RAG VISUAL ── */
+  .rag-flow {
+    display: flex; align-items: center; gap: 0;
+    margin: 24px 0; overflow-x: auto;
+    background: var(--code-bg); border-radius: 12px; padding: 16px 20px;
+  }
+  .rag-node {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; text-align: center;
+    font-size: 12px; min-width: 100px; flex-shrink: 0;
+  }
+  .rag-node strong { display: block; font-size: 11px; font-weight: 600; color: var(--green-700); margin-bottom: 2px; }
+  .rag-arrow { color: var(--muted); padding: 0 8px; font-size: 16px; flex-shrink: 0; }
+  .rag-node.primary { background: var(--green-50); border-color: var(--green-200); }
+  .rag-node.accent  { background: var(--amber-50); border-color: var(--amber-100); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--earth-900);
+    color: rgba(255,255,255,0.5);
+    text-align: center; padding: 32px;
+    font-size: 13px; margin-top: 64px;
+  }
+  footer strong { color: rgba(255,255,255,0.8); }
+
+  /* ── PRINT ── */
+  @media print {
+    .hero { print-color-adjust: exact; }
+    body { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span>🌾</span> Website Architecture Plan
+    </div>
+    <h1><em>AgriHub</em> Indonesia<br>Digitalisasi Ketahanan Pangan</h1>
+    <p>Rancangan lengkap platform AI untuk mewujudkan ketahanan pangan Indonesia — mencakup 5 pilar utama: penjualan langsung petani ke konsumen, matching demand-supply antarwilayah, pemantauan inflasi, pembiayaan & subsidi cerdas, dan logistik pangan — plus chatbot AI berbasis RAG yang terintegrasi WhatsApp.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">4</span><span class="stat-label">Pilar Ketahanan Pangan</span></div>
+      <div class="stat"><span class="stat-num">15+</span><span class="stat-label">Modul Fitur</span></div>
+      <div class="stat"><span class="stat-num">4</span><span class="stat-label">Sprint Development</span></div>
+      <div class="stat"><span class="stat-num">$0.50</span><span class="stat-label">Target Budget AI/Bulan</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="container">
+  <div class="toc">
+    <h3>Daftar Isi</h3>
+    <ol>
+      <li><a href="#stack">Tech Stack & Arsitektur</a></li>
+      <li><a href="#pillars">4 Pilar Digitalisasi Ketahanan Pangan</a></li>
+      <li><a href="#payment">Midtrans — Pembayaran, Escrow & Keuangan</a></li>
+      <li><a href="#loading">Loading Bar Aset Vite → Express</a></li>
+      <li><a href="#rag">Arsitektur RAG & Konteks Dokumen</a></li>
+      <li><a href="#user-upload">Upload Dokumen Personal ke Chatbot</a></li>
+      <li><a href="#database">Database & Auto-Migration</a></li>
+      <li><a href="#pages">Halaman & Routing</a></li>
+      <li><a href="#features">Fitur Lengkap Platform</a></li>
+      <li><a href="#puter">Integrasi Puter.com & WhatsApp Personal</a></li>
+      <li><a href="#group-bot">WhatsApp Bot di Grup — Group Owner Credits</a></li>
+      <li><a href="#credit-usage">Cek Penggunaan Credits — WA & Website</a></li>
+      <li><a href="#ai-model">Pemilihan Model AI (Hemat & Capable)</a></li>
+      <li><a href="#ui">Desain UI/UX</a></li>
+      <li><a href="#roadmap">Roadmap Sprint</a></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══ 1. TECH STACK ═══ -->
+<div class="section" id="stack">
+  <div class="container">
+    <div class="section-tag">01 — Architecture</div>
+    <h2 class="section-title">Tech Stack & Arsitektur Sistem</h2>
+    <p class="section-sub">Full-stack modern dengan pemisahan tanggung jawab yang jelas antara backend Express, frontend Vite, dan layanan AI via Puter.js.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="feat-icon" style="background:#f0faf0">🖥️</div>
+        <div class="feat-title">Backend — Express.js</div>
+        <div class="feat-desc">Serve static build Vite, REST API, WebSocket untuk bot WhatsApp, middleware auth Puter, dan SSE untuk progress upload.</div>
+        <div class="tech-row">
+          <span class="tech-chip">express@5</span>
+          <span class="tech-chip">multer</span>
+          <span class="tech-chip">better-sqlite3</span>
+          <span class="tech-chip amber">cors</span>
+          <span class="tech-chip amber">helmet</span>
+          <span class="tech-chip sky">node-cron</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="feat-icon" style="background:#fff8e8">⚡</div>
+        <div class="feat-title">Frontend — Vite + React</div>
+        <div class="feat-desc">SPA React dengan Tailwind CSS, Framer Motion/Anime.js untuk animasi, dibangun ke folder <code>/dist</code> lalu di-serve oleh Express.</div>
+        <div class="tech-row">
+          <span class="tech-chip">vite@5</span>
+          <span class="tech-chip">react@19</span>
+          <span class="tech-chip amber">tailwindcss@4</span>
+          <span class="tech-chip amber">framer-motion</span>
+          <span class="tech-chip sky">react-query</span>
+          <span class="tech-chip sky">zustand</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="feat-icon" style="background:#f0f8ff">🤖</div>
+        <div class="feat-title">AI & RAG — Puter.js</div>
+        <div class="feat-desc">Semua AI call melewati Puter.js SDK sehingga biaya ditanggung credits user Puter, bukan server kita. Model dipilih yang paling hemat tapi capable.</div>
+        <div class="tech-row">
+          <span class="tech-chip sky">puter.js SDK</span>
+          <span class="tech-chip sky">puter.ai.chat()</span>
+          <span class="tech-chip sky">puter.fs</span>
+          <span class="tech-chip red">langchain (RAG)</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="feat-icon" style="background:#fdf0ff">📦</div>
+        <div class="feat-title">Database & Storage</div>
+        <div class="feat-desc">SQLite untuk dev lokal, bisa upgrade ke MySQL/PostgreSQL via knex.js. Auto-migration check setiap startup. File dokumen disimpan di server lokal atau Puter FS.</div>
+        <div class="tech-row">
+          <span class="tech-chip">knex.js</span>
+          <span class="tech-chip">better-sqlite3</span>
+          <span class="tech-chip amber">mysql2</span>
+          <span class="tech-chip amber">pg</span>
+          <span class="tech-chip earth">umzug (migrator)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="feat-title" style="margin-bottom:12px">📐 Alur Deployment (Monorepo)</div>
+      <pre><span class="cm">── project root ──────────────────────────────</span>
+<span class="kw">apps/</span>
+  <span class="kw">frontend/</span>         <span class="cm"># Vite + React SPA</span>
+    src/
+    dist/             <span class="cm"># output build → di-serve Express</span>
+    vite.config.ts
+  <span class="kw">backend/</span>          <span class="cm"># Express.js server</span>
+    src/
+      <span class="fn">app.ts</span>          <span class="cm"># express setup + serve /dist</span>
+      <span class="fn">migrate.ts</span>      <span class="cm"># auto-run on startup</span>
+      routes/         <span class="cm"># API endpoints</span>
+      rag/            <span class="cm"># embedding + retrieval</span>
+      bot/            <span class="cm"># WhatsApp integration</span>
+    migrations/       <span class="cm"># SQL migration files</span>
+    <span class="fn">knexfile.ts</span>       <span class="cm"># DB config (sqlite/mysql/pg)</span>
+<span class="kw">packages/</span>
+  shared/             <span class="cm"># shared types & utils</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 2. 4 PILAR ═══ -->
+<div class="section" id="pillars">
+  <div class="container">
+    <div class="section-tag">02 — Visi Platform</div>
+    <h2 class="section-title">4 Pilar Digitalisasi Ketahanan Pangan</h2>
+    <p class="section-sub">Empat pilar utama yang mencakup seluruh rantai nilai pangan — dari petani, distribusi, pemantauan harga, hingga logistik. Semua pilar dapat diakses penuh melalui WhatsApp, tanpa harus buka website.</p>
+
+    <div style="display:grid;gap:16px;margin-top:28px">
+
+      <!-- PILAR 1 -->
+      <div class="card" style="border-left:4px solid var(--green-400);border-radius:0 16px 16px 0">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div style="background:var(--green-100);color:var(--green-800);font-family:'Instrument Serif',serif;font-size:1.6rem;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:1rem;margin-bottom:6px">Platform Penjualan Langsung — Petani ke Konsumen</div>
+            <div style="font-size:0.87rem;color:var(--muted);margin-bottom:14px">Marketplace tanpa perantara. Petani bisa daftar toko, listing produk, update stok, dan kelola pesanan — sepenuhnya via WhatsApp tanpa perlu buka website sama sekali.</div>
+            <div style="background:var(--code-bg);border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:12px">
+              <div style="font-weight:600;color:var(--green-700);margin-bottom:8px">📱 Alur WA — Daftar Toko & Jual Produk</div>
+              <div style="font-family:'JetBrains Mono',monospace;line-height:2;color:var(--muted)">
+                <div><span style="color:var(--amber-600)">Petani:</span> DAFTAR TOKO</div>
+                <div><span style="color:var(--green-600)">Bot:</span> Kirim: Nama toko | Kabupaten | Jenis produk utama</div>
+                <div><span style="color:var(--amber-600)">Petani:</span> Tani Maju | Bengkulu Utara | Sayuran, Cabai</div>
+                <div><span style="color:var(--green-600)">Bot:</span> ✅ Toko terdaftar! Kode: TM-2841<br>&nbsp;&nbsp;&nbsp;Untuk jual: JUAL [nama] [harga/kg] [stok kg]</div>
+                <div><span style="color:var(--amber-600)">Petani:</span> JUAL Cabai Merah 45000 50</div>
+                <div><span style="color:var(--green-600)">Bot:</span> ✅ Listed! Kirim foto untuk tampil di website</div>
+                <div style="margin-top:4px;color:var(--sky-600);font-size:11px">— Command lain: STOK, HAPUS, PESANAN, INFO TOKO —</div>
+                <div><span style="color:#888">Konsumen:</span> CARI Cabai Bengkulu → dapat list penjual + BELI [no] [kg]</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:0.81rem">
+              <div><span style="font-weight:600;color:var(--green-700)">Tabel DB</span><br><code>marketplace_listings · marketplace_orders · seller_ratings</code></div>
+              <div><span style="font-weight:600;color:var(--green-700)">Halaman Web</span><br><code>/pasar · /pasar/toko/:id · /pasar/pesanan</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PILAR 2 -->
+      <div class="card" style="border-left:4px solid var(--amber-400);border-radius:0 16px 16px 0">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div style="background:var(--amber-100);color:var(--amber-900);font-family:'Instrument Serif',serif;font-size:1.6rem;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:1rem;margin-bottom:6px">Matching Demand-Supply Antarwilayah</div>
+            <div style="font-size:0.87rem;color:var(--muted);margin-bottom:10px">Mencocokkan surplus panen di satu daerah dengan permintaan di daerah lain. Realisasi: petani/koperasi lapor stok via WA → sistem cari pembeli yang butuh komoditas itu → notifikasi kedua pihak → mereka negosiasi & deal sendiri. Platform sebagai <em>penghubung</em>, bukan perantara transaksi.</div>
+            <div style="background:var(--amber-50);border:1px solid var(--amber-100);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:12.5px">
+              <div style="font-weight:600;color:var(--amber-900);margin-bottom:6px">💡 Cara Realisasi yang Masuk Akal</div>
+              <div style="font-size:0.83rem;color:var(--earth-700);line-height:1.8">
+                <strong>Supply side:</strong> Petani/koperasi lapor stok — komoditas, jumlah, harga, lokasi, tanggal tersedia → masuk "papan stok aktif".<br>
+                <strong>Demand side:</strong> Distributor/pedagang besar lapor kebutuhan — komoditas, jumlah, harga maks, kota tujuan, deadline → masuk "papan kebutuhan".<br>
+                <strong>Matching engine:</strong> Tiap ada entri baru, sistem query DB cari match: komoditas sama + harga dalam ±20% + jarak ≤500km + tanggal ±7 hari. Jika cocok → notifikasi WA ke kedua pihak.<br>
+                <strong>Kontak:</strong> Pihak tertarik balas HUBUNGI → platform kirim nomor WA masing-masing untuk negosiasi langsung.
+              </div>
+            </div>
+            <div style="background:var(--code-bg);border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:12px">
+              <div style="font-weight:600;color:var(--amber-700);margin-bottom:8px">📱 Alur WA — Supply & Demand</div>
+              <div style="font-family:'JetBrains Mono',monospace;line-height:2;color:var(--muted)">
+                <div><span style="color:var(--amber-600)">Petani:</span> STOK Jagung 2000kg 3500/kg Bengkulu 15-Apr</div>
+                <div><span style="color:var(--green-600)">Bot:</span> ✅ Dicatat. Mencari pembeli... Ditemukan 2 match!<br>&nbsp;&nbsp;&nbsp;Notifikasi dikirim ke mereka.</div>
+                <div style="margin-top:4px"><span style="color:var(--sky-400)">Distributor:</span> BUTUH Jagung 5000kg max4000 Jakarta 20-Apr</div>
+                <div><span style="color:var(--green-600)">Bot:</span> ✅ Ada 1 stok cocok di Bengkulu!<br>&nbsp;&nbsp;&nbsp;Tani Maju — 2000kg @ Rp3.500/kg<br>&nbsp;&nbsp;&nbsp;Balas HUBUNGI 1 untuk dapat kontaknya</div>
+                <div style="color:var(--sky-600);font-size:11px;margin-top:4px">— Command lain: CARI STOK, PANTAU, HAPUS STOK —</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:0.81rem">
+              <div><span style="font-weight:600;color:var(--amber-700)">Matching Logic</span><br><code>komoditas + radius 500km + harga ±20% + tanggal ±7 hari</code></div>
+              <div><span style="font-weight:600;color:var(--amber-700)">Tabel DB</span><br><code>supply_reports · demand_requests · match_history · match_contacts</code></div>
+              <div><span style="font-weight:600;color:var(--amber-700)">Halaman Web</span><br><code>/matching · /matching/stok · /matching/kebutuhan · /matching/peta</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PILAR 3 -->
+      <div class="card" style="border-left:4px solid var(--sky-400);border-radius:0 16px 16px 0">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div style="background:var(--sky-50);color:var(--sky-600);font-family:'Instrument Serif',serif;font-size:1.6rem;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:1rem;margin-bottom:6px">Pemantauan Inflasi & Harga Pangan</div>
+            <div style="font-size:0.87rem;color:var(--muted);margin-bottom:14px">Dashboard real-time harga dan inflasi komoditas pangan. User bisa set alert harga dan dapat prediksi AI langsung via WhatsApp — tanpa perlu cek website.</div>
+            <div style="background:var(--code-bg);border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:12px">
+              <div style="font-weight:600;color:var(--sky-600);margin-bottom:8px">📱 Alur WA — Pantau & Alert Harga</div>
+              <div style="font-family:'JetBrains Mono',monospace;line-height:2;color:var(--muted)">
+                <div><span style="color:var(--amber-600)">User:</span> CEK Cabai Merah Bengkulu</div>
+                <div><span style="color:var(--green-600)">Bot:</span> 🌶️ Cabai Merah Bengkulu<br>&nbsp;&nbsp;&nbsp;Hari ini: Rp48.500/kg ▲2.1% dari kemarin<br>&nbsp;&nbsp;&nbsp;Prediksi 2 minggu: Rp52.000/kg ⚠️ naik</div>
+                <div><span style="color:var(--amber-600)">User:</span> ALERT Cabai naik 55000</div>
+                <div><span style="color:var(--green-600)">Bot:</span> ✅ Alert aktif — notif jika Cabai ≥ Rp55.000/kg</div>
+                <div><span style="color:var(--amber-600)">User:</span> INFLASI minggu ini</div>
+                <div><span style="color:var(--green-600)">Bot:</span> 📊 Naik: Cabai +4.2%, Tomat +2.1%<br>&nbsp;&nbsp;&nbsp;Turun: Bawang -1.8%, Kangkung -0.5%</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:0.81rem">
+              <div><span style="font-weight:600;color:var(--sky-600)">Sumber Data</span><br><code>API BPS · input admin · scraping harga-pangan.id</code></div>
+              <div><span style="font-weight:600;color:var(--sky-600)">Tabel DB</span><br><code>price_history · inflation_index · price_alerts · price_predictions</code></div>
+              <div><span style="font-weight:600;color:var(--sky-600)">Halaman Web</span><br><code>/harga · /inflasi · /inflasi/prediksi · /inflasi/peta</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PILAR 4 — LOGISTIK (Biteship) -->
+      <div class="card" style="border-left:4px solid #8a5cf6;border-radius:0 16px 16px 0">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div style="background:#f3eeff;color:#6d35c9;font-family:'Instrument Serif',serif;font-size:1.6rem;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:1rem;margin-bottom:6px">Logistik Pangan Cerdas — Powered by Biteship API</div>
+            <div style="font-size:0.87rem;color:var(--muted);margin-bottom:10px">Seluruh kebutuhan pengiriman hasil panen via Biteship API: cek ongkir multi-kurir (JNE, SiCepat, J&T, Anteraja, dll), booking pickup, dan tracking resi — semua bisa dilakukan via WhatsApp.</div>
+            <div style="background:#f3eeff;border:1px solid #d8b8ff;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:12.5px">
+              <div style="font-weight:600;color:#5a20b0;margin-bottom:8px">🔌 Biteship API Endpoints yang Digunakan</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11.5px">
+                <div style="background:white;border-radius:8px;padding:8px 10px;border:1px solid #e8d8ff"><code style="color:#6d35c9;font-size:10.5px">GET /v1/rates/couriers</code><br><span style="color:var(--muted)">Tarif semua kurir berdasarkan asal, tujuan, berat</span></div>
+                <div style="background:white;border-radius:8px;padding:8px 10px;border:1px solid #e8d8ff"><code style="color:#6d35c9;font-size:10.5px">POST /v1/orders</code><br><span style="color:var(--muted)">Buat order — generate resi & jadwal pickup</span></div>
+                <div style="background:white;border-radius:8px;padding:8px 10px;border:1px solid #e8d8ff"><code style="color:#6d35c9;font-size:10.5px">GET /v1/trackings/:waybill</code><br><span style="color:var(--muted)">Tracking real-time status pengiriman</span></div>
+                <div style="background:white;border-radius:8px;padding:8px 10px;border:1px solid #e8d8ff"><code style="color:#6d35c9;font-size:10.5px">GET /v1/areas</code><br><span style="color:var(--muted)">Lookup area/kecamatan untuk validasi alamat</span></div>
+              </div>
+            </div>
+            <div style="background:var(--code-bg);border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:12px">
+              <div style="font-weight:600;color:#6d35c9;margin-bottom:8px">📱 Alur WA — Cek Ongkir, Booking & Tracking</div>
+              <div style="font-family:'JetBrains Mono',monospace;line-height:2;color:var(--muted)">
+                <div><span style="color:var(--amber-600)">Petani:</span> ONGKIR Bengkulu Jakarta 10kg</div>
+                <div><span style="color:var(--green-600)">Bot:</span> 📦 Tarif 10kg BKL→JKT:<br>&nbsp;&nbsp;&nbsp;1. J&T EXPRESS — Rp82.000 (3-4 hari)<br>&nbsp;&nbsp;&nbsp;2. SiCepat HALU — Rp88.000 (2-3 hari)<br>&nbsp;&nbsp;&nbsp;3. JNE REG — Rp95.000 (3-4 hari)<br>&nbsp;&nbsp;&nbsp;Balas KIRIM [kurir] untuk booking</div>
+                <div><span style="color:var(--amber-600)">Petani:</span> KIRIM SiCepat<br><span style="color:var(--green-600)">Bot:</span> Kirim: Nama | Alamat | No HP penerima</div>
+                <div><span style="color:var(--amber-600)">Petani:</span> Budi | Jl Merdeka 12 Jakarta | 0812345</div>
+                <div><span style="color:var(--green-600)">Bot:</span> ✅ Resi: SCLB12345678. Pickup besok 08-12.</div>
+                <div><span style="color:var(--amber-600)">Petani:</span> CEK RESI SCLB12345678</div>
+                <div><span style="color:var(--green-600)">Bot:</span> 📍 Dalam perjalanan — Hub Palembang → Jakarta</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:0.81rem">
+              <div><span style="font-weight:600;color:#6d35c9">Kurir via Biteship</span><br><code>JNE · SiCepat · J&T · Anteraja · Ninja · GoSend · GrabExpress</code></div>
+              <div><span style="font-weight:600;color:#6d35c9">Tabel DB</span><br><code>shipment_orders · shipment_tracking_cache</code></div>
+              <div><span style="font-weight:600;color:#6d35c9">Halaman Web</span><br><code>/logistik · /logistik/cek-ongkir · /logistik/resi</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MASTER COMMAND TABLE -->
+    <div class="card" style="margin-top:24px">
+      <div class="feat-title" style="margin-bottom:14px">📋 Master Command WhatsApp — Semua 4 Pilar</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:var(--green-50)">
+              <th style="padding:8px 10px;text-align:left;color:var(--green-800);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--green-100)">Pilar</th>
+              <th style="padding:8px 10px;text-align:left;color:var(--green-800);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--green-100)">Command WA</th>
+              <th style="padding:8px 10px;text-align:left;color:var(--green-800);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--green-100)">Fungsi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 10px"><span class="badge badge-green">1</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">DAFTAR TOKO · JUAL · STOK · HAPUS</td><td style="padding:6px 10px;color:var(--muted)">Kelola toko & listing produk</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 10px"><span class="badge badge-green">1</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">CARI [produk] [kota] · BELI [no] [kg]</td><td style="padding:6px 10px;color:var(--muted)">Cari penjual & buat pesanan</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 10px"><span class="badge badge-green">1</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">PESANAN · KONFIRMASI · TOLAK [id]</td><td style="padding:6px 10px;color:var(--muted)">Kelola pesanan masuk/keluar</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#fff0f8"><td style="padding:6px 10px"><span style="background:#ffe0f0;color:#c0185c;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">💳</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">BAYAR [order_id]</td><td style="padding:6px 10px;color:var(--muted)">Terima link pembayaran Midtrans</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#fff0f8"><td style="padding:6px 10px"><span style="background:#ffe0f0;color:#c0185c;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">💳</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">BANDING [order_id] [alasan]</td><td style="padding:6px 10px;color:var(--muted)">Ajukan sengketa ke admin</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#fff0f8"><td style="padding:6px 10px"><span style="background:#ffe0f0;color:#c0185c;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">💳</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">SALDO</td><td style="padding:6px 10px;color:var(--muted)">Cek saldo & pending escrow</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#fff0f8"><td style="padding:6px 10px"><span style="background:#ffe0f0;color:#c0185c;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">💳</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">TARIK [jumlah] [bank] [rekening]</td><td style="padding:6px 10px;color:var(--muted)">Withdraw saldo ke rekening bank</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#fff0f8"><td style="padding:6px 10px"><span style="background:#ffe0f0;color:#c0185c;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">💳</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">LAPORAN [bulan/minggu]</td><td style="padding:6px 10px;color:var(--muted)">Laporan keuangan & pajak ringkas</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:var(--amber-50)"><td style="padding:6px 10px"><span class="badge badge-amber">2</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">STOK [komoditas] [kg] [harga] [kota] [tgl]</td><td style="padding:6px 10px;color:var(--muted)">Lapor surplus stok ke sistem</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:var(--amber-50)"><td style="padding:6px 10px"><span class="badge badge-amber">2</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">BUTUH [komoditas] [kg] [maxharga] [kota] [tgl]</td><td style="padding:6px 10px;color:var(--muted)">Lapor kebutuhan komoditas</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:var(--amber-50)"><td style="padding:6px 10px"><span class="badge badge-amber">2</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">CARI STOK [komoditas] [kota] · HUBUNGI [no]</td><td style="padding:6px 10px;color:var(--muted)">Cari & hubungi pihak yang match</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:var(--amber-50)"><td style="padding:6px 10px"><span class="badge badge-amber">2</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">SKALA MATCHING [radius] [harga%] [hari]</td><td style="padding:6px 10px;color:var(--muted)">Atur skala pencarian match</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 10px"><span style="background:#e0f4ff;color:var(--sky-600);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">3</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">CEK [komoditas] [kota]</td><td style="padding:6px 10px;color:var(--muted)">Cek harga + prediksi hari ini</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 10px"><span style="background:#e0f4ff;color:var(--sky-600);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">3</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">ALERT [komoditas] naik/turun [harga]</td><td style="padding:6px 10px;color:var(--muted)">Set notifikasi harga otomatis</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 10px"><span style="background:#e0f4ff;color:var(--sky-600);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">3</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">INFLASI [periode]</td><td style="padding:6px 10px;color:var(--muted)">Ringkasan inflasi pangan mingguan</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#faf5ff"><td style="padding:6px 10px"><span style="background:#ede0ff;color:#6d35c9;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">4</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">ONGKIR [asal] [tujuan] [kg]</td><td style="padding:6px 10px;color:var(--muted)">Cek tarif semua kurir via Biteship</td></tr>
+            <tr style="border-bottom:1px solid var(--border);background:#faf5ff"><td style="padding:6px 10px"><span style="background:#ede0ff;color:#6d35c9;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">4</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">KIRIM [kurir] → input data penerima</td><td style="padding:6px 10px;color:var(--muted)">Booking pickup & generate resi</td></tr>
+            <tr style="background:#faf5ff"><td style="padding:6px 10px"><span style="background:#ede0ff;color:#6d35c9;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">4</span></td><td style="padding:6px 10px;font-family:'JetBrains Mono',monospace">CEK RESI [nomor] · RIWAYAT KIRIM</td><td style="padding:6px 10px;color:var(--muted)">Tracking & histori pengiriman</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;background:var(--green-50);border-color:var(--green-200)">
+      <div class="feat-title" style="color:var(--green-800);margin-bottom:8px">🤖 Peran AI di Seluruh 4 Pilar</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:0.84rem;margin-top:4px">
+        <div><span style="color:var(--green-700);font-weight:600">Pilar 1 —</span> <span style="color:var(--muted)">Saran harga listing berdasarkan tren pasar + analisis foto kualitas produk</span></div>
+        <div><span style="color:var(--amber-700);font-weight:600">Pilar 2 —</span> <span style="color:var(--muted)">Matching engine otomatis + prediksi waktu terbaik jual surplus komoditas</span></div>
+        <div><span style="color:var(--sky-600);font-weight:600">Pilar 3 —</span> <span style="color:var(--muted)">Prediksi inflasi 2 minggu ke depan dengan model time-series + anomali harga</span></div>
+        <div><span style="color:#6d35c9;font-weight:600">Pilar 4 —</span> <span style="color:var(--muted)">Rekomendasikan kurir terbaik berdasarkan urgensi, budget, dan histori user</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEW: MIDTRANS + KEUANGAN ═══ -->
+<div class="section" id="payment">
+  <div class="container">
+    <div class="section-tag">03 — Pembayaran & Keuangan</div>
+    <h2 class="section-title">Midtrans — Pembayaran, Escrow & Laporan Keuangan</h2>
+    <p class="section-sub">Semua transaksi marketplace dan matching dilindungi oleh sistem escrow berbasis Midtrans. Dana ditahan hingga transaksi selesai, melindungi buyer <em>dan</em> seller dari penipuan. Laporan keuangan, penarikan dana, dan cek saldo bisa dilakukan langsung via WhatsApp.</p>
+
+    <!-- WHY MIDTRANS -->
+    <div class="puter-block" style="background:linear-gradient(135deg,#fff8f0 0%,#fff0e8 100%);border-color:#ffd0a0;margin-top:24px">
+      <h4 style="color:#b05000">🛡️ Kenapa Midtrans? — Anti-Penipuan & Ajuan Banding</h4>
+      <p style="color:#804020">Midtrans adalah payment gateway Indonesia yang sudah berizin OJK. Dana buyer ditahan di escrow Midtrans — seller <strong>tidak bisa menerima uang sebelum buyer konfirmasi barang diterima</strong>. Jika terjadi sengketa, buyer atau seller bisa ajukan banding (BANDING via WA) → admin platform review → keputusan dieksekusi melalui Midtrans Refund API. Tidak ada uang yang bisa "kabur" karena semua ditahan di level payment gateway.</p>
+    </div>
+
+    <!-- ESCROW FLOW -->
+    <div class="card" style="margin-top:20px">
+      <div class="feat-title" style="margin-bottom:14px">🔄 Alur Escrow — Dari Bayar Hingga Cair</div>
+      <div class="flow" style="margin-top:0">
+        <div class="flow-step">
+          <div class="flow-num" style="background:#fff0e8;color:#b05000">1</div>
+          <div class="flow-content">
+            <strong>Buyer buat pesanan → terima link Midtrans via WA</strong>
+            <span>Setelah BELI dikonfirmasi, server generate Midtrans transaction via <code>POST /v2/charge</code>. Link payment dikirim ke WA buyer. Mendukung: QRIS, GoPay, OVO, Dana, VA BCA/Mandiri/BNI/BRI, kartu kredit.</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:#fff0e8;color:#b05000">2</div>
+          <div class="flow-content">
+            <strong>Buyer bayar → dana masuk escrow Midtrans</strong>
+            <span>Midtrans webhook notifikasi server (<code>payment_notification</code>). Status order berubah jadi "dibayar". Seller dinotifikasi WA: "✅ Pesanan #1234 sudah dibayar — siapkan pengiriman."</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:#fff0e8;color:#b05000">3</div>
+          <div class="flow-content">
+            <strong>Seller konfirmasi kirim (via WA atau website)</strong>
+            <span>Seller kirim: <code>KONFIRMASI 1234</code> + nomor resi. Buyer dinotifikasi: "📦 Pesanan dikirim. Resi: SCLB123. Konfirmasi terima dalam 3 hari atau otomatis diterima."</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:#fff0e8;color:#b05000">4</div>
+          <div class="flow-content">
+            <strong>Buyer konfirmasi terima / auto-release 3 hari</strong>
+            <span>Buyer kirim <code>TERIMA 1234</code> → dana dilepas ke saldo seller (minus fee platform). Jika tidak ada respons dalam 3 hari sejak resi terdeteksi sampai → otomatis release. Ini mencegah seller ditahan terus pembayarannya.</span>
+          </div>
+        </div>
+        <div class="flow-step" style="border-bottom:none">
+          <div class="flow-num" style="background:#fff0e8;color:#c03020">!</div>
+          <div class="flow-content">
+            <strong>Sengketa → Ajuan Banding (window 3 hari setelah pengiriman)</strong>
+            <span>Buyer kirim <code>BANDING 1234 [alasan]</code> → status order jadi "sengketa" → dana di-freeze. Admin platform review (bukti foto/resi) → keputusan: refund buyer via Midtrans atau release ke seller. Keputusan final dalam 3x24 jam.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEE STRUCTURE -->
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:14px">💰 Struktur Biaya — Shared Cost Model</div>
+      <p style="font-size:0.87rem;color:var(--muted);margin-bottom:16px">Biaya admin platform dihitung dari <strong>pool seluruh pendapatan platform</strong> dibagi rata ke semua user aktif. Makin banyak user dan transaksi, makin murah biaya per user — karena server cost ditanggung bersama.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px">
+        <div style="background:var(--green-50);border:1px solid var(--green-100);border-radius:12px;padding:16px">
+          <div style="font-weight:600;font-size:0.88rem;color:var(--green-800);margin-bottom:8px">📋 Per Transaksi (Seller Menanggung)</div>
+          <div style="font-size:0.83rem;line-height:2;color:var(--text)">
+            <div style="display:flex;justify-content:space-between"><span>Platform fee</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-700)">2% dari nilai transaksi</span></div>
+            <div style="display:flex;justify-content:space-between"><span>PPN 11% dari platform fee</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-700)">0.22% dari nilai transaksi</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Midtrans MDR</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-700)">~0.7% (tergantung metode)</span></div>
+            <div style="display:flex;justify-content:space-between;border-top:1px solid var(--green-200);padding-top:6px;margin-top:4px;font-weight:600"><span>Total potongan seller</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-700)">~2.92% per transaksi</span></div>
+          </div>
+        </div>
+        <div style="background:var(--amber-50);border:1px solid var(--amber-100);border-radius:12px;padding:16px">
+          <div style="font-weight:600;font-size:0.88rem;color:var(--amber-900);margin-bottom:8px">🏦 Withdrawal ke Bank</div>
+          <div style="font-size:0.83rem;line-height:2;color:var(--text)">
+            <div style="display:flex;justify-content:space-between"><span>Biaya transfer bank</span><span style="font-family:'JetBrains Mono',monospace;color:var(--amber-700)">Rp2.500/tarik</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Minimum penarikan</span><span style="font-family:'JetBrains Mono',monospace;color:var(--amber-700)">Rp50.000</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Waktu proses</span><span style="font-family:'JetBrains Mono',monospace;color:var(--amber-700)">1x24 jam kerja</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Bank didukung</span><span style="font-family:'JetBrains Mono',monospace;color:var(--amber-700)">BCA, BNI, BRI, Mandiri, +</span></div>
+          </div>
+        </div>
+        <div style="background:var(--sky-50);border:1px solid #cce8ff;border-radius:12px;padding:16px">
+          <div style="font-weight:600;font-size:0.88rem;color:var(--sky-600);margin-bottom:8px">🖥️ Shared Server Cost Pool</div>
+          <div style="font-size:0.83rem;line-height:1.8;color:var(--muted)">
+            Total biaya server/bulan dibagi ke semua user aktif. Contoh: server Rp500.000/bulan dengan 1.000 user aktif = Rp500/user. Dengan 10.000 user = hanya Rp50/user. <strong>Biaya makin murah seiring pertumbuhan platform.</strong> Pool ini diambil dari platform fee, bukan ditagih langsung ke user.
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--code-bg);border-radius:10px;padding:14px 16px;font-size:12.5px">
+        <div style="font-weight:600;color:var(--green-700);margin-bottom:8px">📊 Contoh Perhitungan — Transaksi Rp500.000</div>
+        <div style="font-family:'JetBrains Mono',monospace;line-height:2;color:var(--muted)">
+          <div>Nilai transaksi buyer bayar      : Rp500.000</div>
+          <div>Midtrans MDR (~0.7% QRIS)        : Rp3.500  ← ditanggung buyer (sudah include di total)</div>
+          <div>Platform fee 2%                  : Rp10.000 ← dipotong dari penerimaan seller</div>
+          <div>PPN 11% × platform fee           : Rp1.100  ← platform setor ke kas negara</div>
+          <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;font-weight:600;color:var(--text)">Seller terima bersih                : Rp488.900</div>
+          <div style="color:var(--green-600)">Platform revenue (sebelum server)  : Rp8.900  (Rp10.000 - Rp1.100 PPN)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADJUSTABLE MATCHING SCALE -->
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:12px">🎛️ Skala Matching yang Bisa Diatur User (Pilar 2)</div>
+      <p style="font-size:0.87rem;color:var(--muted);margin-bottom:14px">User bisa sesuaikan seberapa "luas" sistem mencari pasangan supply/demand mereka. Default disarankan untuk kebanyakan kasus, tapi bisa disesuaikan kapan saja via website atau command WA.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px">
+        <div style="background:var(--code-bg);border-radius:10px;padding:14px">
+          <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:var(--green-700)">📍 Radius Pencarian</div>
+          <div style="font-size:0.82rem;line-height:2;color:var(--muted)">
+            <div>50 km — satu kota/kabupaten</div>
+            <div>100 km — antar-kota terdekat</div>
+            <div style="color:var(--text);font-weight:500">200 km — antar-provinsi (default)</div>
+            <div>500 km — lintas pulau Sumatera</div>
+            <div>Nasional — seluruh Indonesia</div>
+          </div>
+        </div>
+        <div style="background:var(--code-bg);border-radius:10px;padding:14px">
+          <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:var(--amber-700)">💵 Toleransi Harga</div>
+          <div style="font-size:0.82rem;line-height:2;color:var(--muted)">
+            <div>±5% — harga sangat ketat</div>
+            <div style="color:var(--text);font-weight:500">±20% — fleksibel (default)</div>
+            <div>±30% — negosiasi terbuka</div>
+            <div>±50% — asal ketemu penjual</div>
+          </div>
+        </div>
+        <div style="background:var(--code-bg);border-radius:10px;padding:14px">
+          <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:var(--sky-600)">📅 Toleransi Tanggal</div>
+          <div style="font-size:0.82rem;line-height:2;color:var(--muted)">
+            <div>±3 hari — urgensi tinggi</div>
+            <div style="color:var(--text);font-weight:500">±7 hari — normal (default)</div>
+            <div>±14 hari — fleksibel</div>
+            <div>±30 hari — jangka panjang</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--code-bg);border-radius:10px;padding:12px 14px;font-size:12px">
+        <div style="font-family:'JetBrains Mono',monospace;line-height:2;color:var(--muted)">
+          <div style="color:var(--amber-600)">User:</div>
+          <div>SKALA MATCHING 500km 30% 14hari &nbsp;<span style="color:var(--sky-600);font-size:11px">← cari lebih luas</span></div>
+          <div style="color:var(--green-600)">Bot: ✅ Skala matching diperbarui:<br>&nbsp;&nbsp;&nbsp;Radius: 500 km | Harga: ±30% | Tanggal: ±14 hari<br>&nbsp;&nbsp;&nbsp;Sistem akan mencari ulang match yang ada...</div>
+          <div style="color:var(--green-600)">Bot: 🎯 Ditemukan 3 match baru dengan skala baru ini!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAPORAN KEUANGAN -->
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:12px">📊 Laporan Keuangan — Simple & Mudah Dipahami</div>
+      <p style="font-size:0.87rem;color:var(--muted);margin-bottom:14px">Laporan dirancang untuk petani/pedagang yang tidak familiar dengan akuntansi. Bahasa Indonesia sederhana, tanpa jargon keuangan. Tersedia via website (grafik) dan WA (teks ringkas).</p>
+
+      <div class="grid-2" style="margin-top:0">
+        <div>
+          <div style="font-weight:600;font-size:0.87rem;margin-bottom:10px;color:var(--green-700)">🌐 Dashboard Website /keuangan</div>
+          <div style="background:var(--green-50);border:1px solid var(--green-100);border-radius:10px;padding:14px;font-size:13px">
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--green-100)"><span>Total pemasukan bulan ini</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-700);font-weight:600">Rp4.250.000</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--green-100)"><span>Platform fee terpotong (2%)</span><span style="font-family:'JetBrains Mono',monospace;color:var(--red-600)">- Rp85.000</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--green-100)"><span>PPN yang disetor (11% × fee)</span><span style="font-family:'JetBrains Mono',monospace;color:var(--red-600)">- Rp9.350</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--green-100)"><span>Biaya transfer bank</span><span style="font-family:'JetBrains Mono',monospace;color:var(--red-600)">- Rp7.500</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--green-100);font-weight:600"><span>Bersih diterima</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-800)">Rp4.148.150</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0"><span>Saldo tersedia untuk ditarik</span><span style="font-family:'JetBrains Mono',monospace;color:var(--sky-600);font-weight:600">Rp2.648.150</span></div>
+          </div>
+          <div style="font-size:0.81rem;color:var(--muted);margin-top:8px">+ Grafik Recharts bar chart per minggu, download CSV/PDF laporan, histori transaksi lengkap dengan filter tanggal.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:0.87rem;margin-bottom:10px;color:var(--green-700)">📱 Laporan via WhatsApp</div>
+          <div style="background:#0d1a0d;border-radius:10px;padding:16px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:#c8e6b4;line-height:1.9">
+            <div style="color:#7dd87d;font-weight:600;margin-bottom:6px">📊 Laporan Keuangan — Maret 2025</div>
+            <div>━━━━━━━━━━━━━━━━━━━━━</div>
+            <div>💵 Pemasukan        : Rp4.250.000</div>
+            <div>✂️ Potongan total   : Rp101.850</div>
+            <div style="font-size:11px;color:#6a7d58">   (fee Rp85.000 + PPN Rp9.350 + transfer Rp7.500)</div>
+            <div>✅ Bersih diterima  : Rp4.148.150</div>
+            <div>💰 Saldo tersedia   : Rp2.648.150</div>
+            <div style="margin-top:6px;color:#8aa87a">─ Transaksi ─</div>
+            <div>📦 Selesai   : 18 pesanan</div>
+            <div>⏳ Pending   : 3 pesanan</div>
+            <div>⚠️ Sengketa  : 1 pesanan (dalam review)</div>
+            <div style="margin-top:6px;color:#6a7d58;font-size:11px">Ketik TARIK [jumlah] untuk withdraw<br>Ketik LAPORAN DETAIL untuk rincian lengkap</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DB SCHEMA -->
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:12px">🗃️ Tabel Database — Pembayaran & Keuangan</div>
+      <div class="grid-2" style="margin-top:0">
+        <div>
+          <p class="schema-name">💳 Tabel: transactions</p>
+          <div class="schema-wrap">
+            <table class="schema-table">
+              <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+              <tr><td class="pk">id</td><td class="type">UUID / PK</td><td>—</td></tr>
+              <tr><td class="fk">order_id</td><td class="type">UUID / FK</td><td>→ marketplace_orders</td></tr>
+              <tr><td>midtrans_order_id</td><td class="type">VARCHAR</td><td>ID unik untuk Midtrans</td></tr>
+              <tr><td>midtrans_txn_id</td><td class="type">VARCHAR</td><td>Transaction ID dari Midtrans</td></tr>
+              <tr><td>gross_amount</td><td class="type">DECIMAL</td><td>Total bayar buyer</td></tr>
+              <tr><td>platform_fee</td><td class="type">DECIMAL</td><td>2% dari gross_amount</td></tr>
+              <tr><td>ppn_amount</td><td class="type">DECIMAL</td><td>11% × platform_fee</td></tr>
+              <tr><td>seller_net</td><td class="type">DECIMAL</td><td>Bersih diterima seller</td></tr>
+              <tr><td>status</td><td class="type">ENUM</td><td>pending/paid/released/refunded/dispute</td></tr>
+              <tr><td>payment_method</td><td class="type">VARCHAR</td><td>qris/gopay/va_bca/dll</td></tr>
+              <tr><td>paid_at</td><td class="type">TIMESTAMP</td><td>Waktu pembayaran</td></tr>
+              <tr><td>released_at</td><td class="type">TIMESTAMP</td><td>Waktu dana dilepas ke seller</td></tr>
+            </table>
+          </div>
+        </div>
+        <div>
+          <p class="schema-name">⚖️ Tabel: disputes</p>
+          <div class="schema-wrap">
+            <table class="schema-table">
+              <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+              <tr><td class="pk">id</td><td class="type">INT / PK</td><td>—</td></tr>
+              <tr><td class="fk">transaction_id</td><td class="type">UUID / FK</td><td>→ transactions</td></tr>
+              <tr><td class="fk">raised_by</td><td class="type">UUID / FK</td><td>→ users.id</td></tr>
+              <tr><td>reason</td><td class="type">TEXT</td><td>Alasan sengketa dari user</td></tr>
+              <tr><td>evidence_urls</td><td class="type">JSON</td><td>Foto/bukti yang diupload</td></tr>
+              <tr><td>admin_note</td><td class="type">TEXT</td><td>Catatan keputusan admin</td></tr>
+              <tr><td>resolution</td><td class="type">ENUM</td><td>refund_buyer / release_seller</td></tr>
+              <tr><td>resolved_at</td><td class="type">TIMESTAMP</td><td>—</td></tr>
+            </table>
+          </div>
+          <p class="schema-name" style="margin-top:16px">🏦 Tabel: seller_wallets</p>
+          <div class="schema-wrap">
+            <table class="schema-table">
+              <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+              <tr><td class="pk">user_id</td><td class="type">UUID / PK/FK</td><td>→ users.id</td></tr>
+              <tr><td>balance</td><td class="type">DECIMAL</td><td>Saldo tersedia untuk ditarik</td></tr>
+              <tr><td>pending</td><td class="type">DECIMAL</td><td>Dana di escrow (belum release)</td></tr>
+              <tr><td>total_earned</td><td class="type">DECIMAL</td><td>Total pemasukan sepanjang waktu</td></tr>
+              <tr><td>total_withdrawn</td><td class="type">DECIMAL</td><td>Total yang sudah ditarik</td></tr>
+              <tr><td>bank_name</td><td class="type">VARCHAR</td><td>Bank terdaftar untuk withdraw</td></tr>
+              <tr><td>bank_account</td><td class="type">VARCHAR (encrypted)</td><td>Nomor rekening (dienkripsi)</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE SNIPPET -->
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">⚙️ Implementasi — Midtrans Charge + Webhook + WA Flow</div>
+      <pre><span class="cm">// payment/midtrans.ts — buat transaksi + kirim link ke WA</span>
+<span class="kw">import</span> midtransClient <span class="kw">from</span> <span class="str">'midtrans-client'</span>
+<span class="kw">const</span> snap = <span class="kw">new</span> midtransClient.<span class="fn">Snap</span>({ isProduction: <span class="kw">true</span>, serverKey: process.env.MIDTRANS_SERVER_KEY })
+
+<span class="kw">export async function</span> <span class="fn">createPayment</span>(order: Order, buyer: User) {
+  <span class="kw">const</span> txn = <span class="kw">await</span> snap.createTransaction({
+    transaction_details: { order_id: order.id, gross_amount: order.total },
+    customer_details: { first_name: buyer.name, phone: buyer.phone_wa },
+    expiry: { duration: <span class="num">24</span>, unit: <span class="str">'hours'</span> }
+  })
+  <span class="cm">// Kirim link ke WA buyer</span>
+  <span class="kw">await</span> <span class="fn">sendWA</span>(buyer.phone_wa,
+    <span class="str">`💳 Bayar pesanan #${order.id} (Rp${order.total.toLocaleString('id')})\n\nLink: ${txn.redirect_url}\n\nBerlaku 24 jam. Balas BANDING ${order.id} jika ada masalah.`</span>)
+}
+
+<span class="cm">// Webhook handler — dipanggil Midtrans saat status berubah</span>
+app.<span class="fn">post</span>(<span class="str">'/api/payment/webhook'</span>, <span class="kw">async</span> (req, res) => {
+  <span class="kw">const</span> notif = <span class="kw">await</span> snap.transaction.<span class="fn">notification</span>(req.body)
+  <span class="kw">if</span> (notif.transaction_status === <span class="str">'settlement'</span>) {
+    <span class="kw">await</span> <span class="fn">markOrderPaid</span>(notif.order_id)
+    <span class="kw">await</span> <span class="fn">notifySellerWA</span>(<span class="str">`✅ Pesanan #${notif.order_id} DIBAYAR. Siapkan pengiriman!`</span>)
+  }
+})
+
+<span class="cm">// Auto-release escrow setelah 3 hari jika buyer tidak respons</span>
+<span class="cm">// node-cron: '0 0 * * *' → cek setiap tengah malam</span>
+<span class="kw">const</span> stale = <span class="kw">await</span> db(<span class="str">'transactions'</span>)
+  .<span class="fn">where</span>({ status: <span class="str">'shipped'</span> })
+  .<span class="fn">where</span>(<span class="str">'shipped_at'</span>, <span class="str">'<'</span>, <span class="fn">daysAgo</span>(<span class="num">3</span>))
+<span class="kw">for</span> (<span class="kw">const</span> t <span class="kw">of</span> stale) <span class="kw">await</span> <span class="fn">releaseToSeller</span>(t)  <span class="cm">// kredit saldo seller</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. LOADING BAR ═══ -->
+<div class="section" id="loading">
+  <div class="container">
+    <div class="section-tag">04 — UX</div>
+    <h2 class="section-title">Loading Bar Saat Download Aset Vite</h2>
+    <p class="section-sub">Saat browser pertama kali mengakses, semua aset Vite (JS chunk, CSS, gambar) di-download. Kita tampilkan progress bar indah dengan info jumlah file dan total size.</p>
+
+    <div class="loadbar-demo">
+      <div class="lb-header">
+        <span class="lb-title">🌱 Memuat AgriHub...</span>
+        <span class="lb-stats">72% · 1.4 MB / 1.9 MB · 8/11 aset</span>
+      </div>
+      <div class="lb-track"><div class="lb-fill"></div></div>
+      <div class="lb-file-list">
+        <div class="lb-file done"><span>index-Bx8k2L.js</span><span>612 KB ✓</span></div>
+        <div class="lb-file done"><span>vendor-react-DKpa1.js</span><span>428 KB ✓</span></div>
+        <div class="lb-file done"><span>tailwind-abc12.css</span><span>48 KB ✓</span></div>
+        <div class="lb-file active"><span>charts-vendor-Qx91.js</span><span>⟳ 210 KB / 310 KB</span></div>
+        <div class="lb-file"><span>fonts-inter-Wq3m.woff2</span><span>— pending</span></div>
+        <div class="lb-file"><span>hero-bg-Dkp8.webp</span><span>— pending</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="feat-title" style="margin-bottom:10px">📋 Implementasi — Service Worker + SSE</div>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px">Express menyuntik manifest Vite ke HTML shell, lalu JS kecil di <code>&lt;head&gt;</code> menggunakan <code>PerformanceObserver</code> dan <code>XMLHttpRequest.progress</code> untuk melaporkan progress real-time:</p>
+      <pre><span class="cm">// backend/src/middleware/assetProgress.ts</span>
+<span class="kw">import</span> manifest <span class="kw">from</span> <span class="str">'../../frontend/dist/.vite/manifest.json'</span>
+
+<span class="cm">// 1. Kirim manifest ke client saat GET /</span>
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (req, res) => {
+  <span class="kw">const</span> assets = Object.<span class="fn">values</span>(manifest).<span class="fn">flatMap</span>(e => [e.file, ...(e.css||[])])
+  res.<span class="fn">render</span>(<span class="str">'shell'</span>, { assets, totalSize: <span class="fn">calcTotalSize</span>(assets) })
+})
+
+<span class="cm">// 2. SSE endpoint untuk progress per-asset</span>
+app.<span class="fn">get</span>(<span class="str">'/api/load-progress'</span>, (req, res) => {
+  res.<span class="fn">setHeader</span>(<span class="str">'Content-Type'</span>, <span class="str">'text/event-stream'</span>)
+  <span class="cm">// client JS kirim XHR per aset, progress dikirim via SSE</span>
+})</pre>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="card card-sm">
+        <div class="feat-title">🎨 Animasi Loading</div>
+        <div class="feat-desc">Framer Motion animate progress bar dengan spring physics. Setiap file yang selesai di-download diberi checkmark animation.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">📊 Info Ditampilkan</div>
+        <div class="feat-desc">Jumlah file, ukuran masing-masing (KB/MB), total progress, estimated time, dan nama file sedang di-download.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">⚡ Service Worker Cache</div>
+        <div class="feat-desc">Setelah visit pertama, aset di-cache oleh SW. Visit berikutnya instant — loading bar tidak muncul lagi kecuali ada update.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. RAG ═══ -->
+<div class="section" id="rag">
+  <div class="container">
+    <div class="section-tag">05 — AI</div>
+    <h2 class="section-title">Arsitektur RAG & Konteks Dokumen</h2>
+    <p class="section-sub">Retrieval-Augmented Generation: dokumen pertanian (.pdf, .xlsx, .docx, URL) di-embed ke vektor, lalu saat user bertanya, konteks relevan diambil dan dikirim ke AI.</p>
+
+    <div class="rag-flow">
+      <div class="rag-node primary"><strong>Input</strong>PDF/XLSX/DOCX/URL</div>
+      <div class="rag-arrow">→</div>
+      <div class="rag-node"><strong>Parser</strong>pdf-parse, xlsx, mammoth</div>
+      <div class="rag-arrow">→</div>
+      <div class="rag-node"><strong>Chunker</strong>500 token / chunk</div>
+      <div class="rag-arrow">→</div>
+      <div class="rag-node accent"><strong>Embedder</strong>Puter AI Embedding</div>
+      <div class="rag-arrow">→</div>
+      <div class="rag-node"><strong>VectorDB</strong>sqlite-vec / pgvector</div>
+      <div class="rag-arrow">→</div>
+      <div class="rag-node primary"><strong>Retriever</strong>Top-K similarity</div>
+      <div class="rag-arrow">→</div>
+      <div class="rag-node accent"><strong>LLM</strong>Puter.ai.chat()</div>
+    </div>
+
+    <div class="grid-2" style="margin-top:4px">
+      <div class="card">
+        <div class="feat-title">📄 Format Dokumen Didukung</div>
+        <div class="tech-row" style="margin-top:10px">
+          <span class="tech-chip earth">PDF</span>
+          <span class="tech-chip earth">DOCX</span>
+          <span class="tech-chip earth">XLSX / CSV</span>
+          <span class="tech-chip earth">TXT / MD</span>
+          <span class="tech-chip amber">URL (web scrape)</span>
+          <span class="tech-chip sky">YouTube (transcript)</span>
+        </div>
+        <div class="feat-desc" style="margin-top:12px">Setiap dokumen di-chunk 500 token dengan overlap 50 token agar konteks tidak putus di tengah.</div>
+      </div>
+      <div class="card">
+        <div class="feat-title">🔗 Browseable Link sebagai Konteks</div>
+        <div class="feat-desc" style="margin-top:8px">Admin/user bisa menambahkan URL halaman web (misal portal pertanian Kementan, FAO, IRRI) sebagai sumber. Sistem crawl URL tersebut, scrape kontennya, embed, dan simpan ke vektor DB. Setiap URL tercatat tanggal crawl untuk refresh berkala.</div>
+        <div class="tech-row" style="margin-top:12px">
+          <span class="tech-chip sky">cheerio (scraper)</span>
+          <span class="tech-chip sky">node-cron (refresh)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">🧠 Prompt RAG Template</div>
+      <pre><span class="cm">// rag/prompt.ts — template untuk setiap query</span>
+<span class="kw">const</span> <span class="fn">buildPrompt</span> = (query: <span class="kw">string</span>, chunks: <span class="kw">string</span>[]) => <span class="str">`
+Kamu adalah asisten pertanian Indonesia yang membantu petani.
+Gunakan HANYA informasi berikut sebagai konteks:
+
+--- KONTEKS ---
+${chunks.<span class="fn">join</span>('\n\n')}
+--- AKHIR KONTEKS ---
+
+Pertanyaan: ${query}
+
+Jawab dalam Bahasa Indonesia yang mudah dipahami.
+Jika jawaban tidak ada dalam konteks, katakan jujur dan sarankan
+sumber terpercaya seperti Kementan atau FAO.
+Sertakan tips praktis bila relevan.
+`</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5. USER UPLOAD DOC ═══ -->
+<div class="section" id="user-upload">
+  <div class="container">
+    <div class="section-tag">06 — Chat Feature</div>
+    <h2 class="section-title">Upload Dokumen Personal ke Chatbot</h2>
+    <p class="section-sub">User bisa upload dokumen <em>milik mereka sendiri</em> langsung di halaman chat — AI membaca isinya dan bisa menjawab pertanyaan tentang dokumen itu. Berbeda dari RAG global: dokumen ini bersifat personal dan tidak masuk knowledge base publik.</p>
+
+    <div class="grid-2" style="margin-top:0">
+      <div class="card" style="background:var(--green-50);border-color:var(--green-200)">
+        <div class="feat-title" style="color:var(--green-800)">📄 RAG Global (Admin)</div>
+        <div class="feat-desc" style="margin-top:8px">Dokumen diupload admin → di-chunk → di-embed → masuk VectorDB → jadi pengetahuan <strong>semua user</strong>. Proses async, bisa memakan beberapa menit. Permanen.</div>
+      </div>
+      <div class="card" style="background:var(--amber-50);border-color:var(--amber-100)">
+        <div class="feat-title" style="color:var(--amber-900)">📎 Upload Personal (User)</div>
+        <div class="feat-desc" style="margin-top:8px">User upload dokumen di chat → isi di-parse langsung → dimasukkan ke context window AI → AI bisa langsung jawab. Proses <strong>instant</strong>, hanya untuk sesi user itu. Tidak disimpan permanen.</div>
+      </div>
+    </div>
+
+    <div class="flow" style="margin-top:24px">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <strong>User klik ikon 📎 di interface chat, pilih file</strong>
+          <span>Format yang didukung: PDF, DOCX, XLSX, TXT, JPG/PNG (gambar tabel/brosur). Batas ukuran: 10 MB per file, maks 3 file per sesi. File diupload ke endpoint <code>/api/chat/upload-doc</code>.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <strong>Server parse dokumen jadi teks</strong>
+          <span>PDF → <code>pdf-parse</code>, DOCX → <code>mammoth</code>, XLSX → <code>xlsx</code>, gambar → Puter Vision AI (OCR). Teks hasil parse disimpan sementara di memori server (atau Redis TTL 1 jam), tidak ke DB permanen.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <strong>Teks dokumen diinjeksi ke context prompt AI</strong>
+          <span>Karena model default (Qwen3.5 Flash) mendukung 1M token context, seluruh isi dokumen langsung dikirim sebagai bagian dari prompt — tidak perlu chunking/embedding. Untuk dokumen besar (&gt;50 halaman), baru dilakukan chunking sederhana.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <strong>AI merespons berdasarkan isi dokumen + knowledge RAG global</strong>
+          <span>Contoh: petani upload brosur pupuk NPK baru → tanya "ini cocok buat tanaman cabai saya nggak?" → AI baca brosur + ambil data dari RAG global tentang kebutuhan pupuk cabai → jawab spesifik dan relevan.</span>
+        </div>
+      </div>
+      <div class="flow-step" style="border-bottom:none">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <strong>Dokumen tersedia selama sesi — user bisa terus bertanya</strong>
+          <span>Dalam satu sesi chat, user bisa ajukan banyak pertanyaan tentang dokumen yang sama. Sesi berakhir jika user tutup tab atau tidak aktif 60 menit. Dokumen tidak disimpan setelah sesi berakhir kecuali user klik "Simpan ke Koleksi Saya".</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card card-sm">
+        <div class="feat-title">💬 Contoh Use Case</div>
+        <div class="feat-desc" style="font-size:0.83rem;line-height:1.7">
+          <div style="margin-bottom:4px">📄 Upload brosur pupuk baru → <em>"Ini cocok buat padi varietas apa?"</em></div>
+          <div style="margin-bottom:4px">📊 Upload data panen XLSX → <em>"Bulan mana produktivitas tertinggi?"</em></div>
+          <div style="margin-bottom:4px">📑 Upload SK Permentan → <em>"Ringkaskan aturan subsidi di dokumen ini"</em></div>
+          <div>🖼️ Foto tabel harga pasar → <em>"Konversi ini ke format tabel yang rapi"</em></div>
+        </div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">📱 Via WhatsApp Bot</div>
+        <div class="feat-desc">User bisa kirim dokumen (PDF/gambar) langsung ke WA bot. Bot balas: <em>"Dokumen diterima ✅ Silakan tanyakan apapun tentang isi dokumen ini."</em> File disimpan sementara di server selama 60 menit sesi.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">💾 "Simpan ke Koleksi"</div>
+        <div class="feat-desc">Jika user sering butuh dokumen yang sama (misal SOP tanam padi milik sendiri), mereka bisa klik "Simpan" — dokumen disimpan permanen di akun mereka (Puter FS atau DB kita) dan bisa di-load ulang di sesi berikutnya.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">⚙️ Implementasi — Endpoint Upload & Inject ke Prompt</div>
+      <pre><span class="cm">// routes/chat.ts — upload dokumen personal ke sesi chat</span>
+app.<span class="fn">post</span>(<span class="str">'/api/chat/upload-doc'</span>, upload.<span class="fn">single</span>(<span class="str">'file'</span>), <span class="kw">async</span> (req, res) => {
+  <span class="kw">const</span> { mimetype, buffer } = req.file
+  <span class="kw">let</span> text = <span class="str">''</span>
+
+  <span class="kw">if</span> (mimetype === <span class="str">'application/pdf'</span>)
+    text = (<span class="kw">await</span> pdfParse(buffer)).text
+  <span class="kw">else if</span> (mimetype.<span class="fn">includes</span>(<span class="str">'word'</span>))
+    text = (<span class="kw">await</span> mammoth.<span class="fn">extractRawText</span>({ buffer })).value
+  <span class="kw">else if</span> (mimetype.<span class="fn">includes</span>(<span class="str">'sheet'</span>))
+    text = <span class="fn">xlsxToText</span>(buffer)
+  <span class="kw">else if</span> (mimetype.<span class="fn">startsWith</span>(<span class="str">'image/'</span>))
+    text = <span class="kw">await</span> puter.ai.<span class="fn">vision</span>(buffer, <span class="str">'Extract all text from this image'</span>)
+
+  <span class="cm">// Simpan di session store (Redis/memori), TTL 1 jam</span>
+  <span class="kw">await</span> session.<span class="fn">set</span>(<span class="str">`doc:${req.sessionId}`</span>, text, <span class="str">'EX'</span>, <span class="num">3600</span>)
+  res.<span class="fn">json</span>({ ok: <span class="kw">true</span>, preview: text.<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">300</span>) + <span class="str">'...'</span> })
+})
+
+<span class="cm">// Di chat handler — inject dokumen ke prompt jika ada</span>
+<span class="kw">const</span> docContext = <span class="kw">await</span> session.<span class="fn">get</span>(<span class="str">`doc:${req.sessionId}`</span>)
+<span class="kw">const</span> prompt = docContext
+  ? <span class="str">`--- ISI DOKUMEN USER ---\n${docContext}\n--- AKHIR DOKUMEN ---\n\n${userQuery}`</span>
+  : userQuery</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 6. DATABASE ═══ -->
+<div class="section" id="database">
+  <div class="container">
+    <div class="section-tag">07 — Database</div>
+    <h2 class="section-title">Database & Auto-Migration</h2>
+    <p class="section-sub">Knex.js sebagai query builder universal. Saat server start, otomatis cek migration yang belum dijalankan dan eksekusi secara berurutan.</p>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="feat-title" style="margin-bottom:10px">⚙️ Auto-Migration pada Startup</div>
+      <pre><span class="cm">// backend/src/migrate.ts — dijalankan sebelum app.listen()</span>
+<span class="kw">import</span> db <span class="kw">from</span> <span class="str">'./db'</span>
+
+<span class="kw">export async function</span> <span class="fn">runMigrations</span>() {
+  console.<span class="fn">log</span>(<span class="str">'🌱 Checking database migrations...'</span>)
+  <span class="kw">const</span> [batch, migrated] = <span class="kw">await</span> db.migrate.<span class="fn">latest</span>()
+
+  <span class="kw">if</span> (migrated.length === <span class="num">0</span>) {
+    console.<span class="fn">log</span>(<span class="str">'✅ Database already up to date'</span>)
+  } <span class="kw">else</span> {
+    console.<span class="fn">log</span>(<span class="str">`✅ Ran ${migrated.length} migrations (batch ${batch})`</span>)
+    migrated.<span class="fn">forEach</span>(m => console.<span class="fn">log</span>(<span class="str">`   + ${m}`</span>))
+  }
+}
+
+<span class="cm">// Dukungan multi-DB via env variable:</span>
+<span class="cm">// DB_CLIENT=sqlite3 | mysql2 | pg</span></pre>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <p class="schema-name">📦 Tabel: users</p>
+        <div class="schema-wrap">
+          <table class="schema-table">
+            <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+            <tr><td class="pk">id</td><td class="type">UUID / PK</td><td>Primary key</td></tr>
+            <tr><td>puter_user_id</td><td class="type">VARCHAR</td><td>Linked Puter account</td></tr>
+            <tr><td>phone_wa</td><td class="type">VARCHAR</td><td>No WA untuk bot</td></tr>
+            <tr><td>name</td><td class="type">VARCHAR</td><td>Nama pengguna</td></tr>
+            <tr><td>province</td><td class="type">VARCHAR</td><td>Provinsi domisili</td></tr>
+            <tr><td>created_at</td><td class="type">TIMESTAMP</td><td>—</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <p class="schema-name">🌿 Tabel: plants</p>
+        <div class="schema-wrap">
+          <table class="schema-table">
+            <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+            <tr><td class="pk">id</td><td class="type">INT / PK</td><td>Primary key</td></tr>
+            <tr><td>name</td><td class="type">VARCHAR</td><td>Nama tanaman (ID)</td></tr>
+            <tr><td>latin_name</td><td class="type">VARCHAR</td><td>Nama latin</td></tr>
+            <tr><td>category</td><td class="type">ENUM</td><td>sayuran/buah/padi/dll</td></tr>
+            <tr><td>grow_days</td><td class="type">INT</td><td>Estimasi hari tanam</td></tr>
+            <tr><td>regions</td><td class="type">JSON</td><td>Cocok di daerah mana</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <p class="schema-name">💰 Tabel: price_history</p>
+        <div class="schema-wrap">
+          <table class="schema-table">
+            <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+            <tr><td class="pk">id</td><td class="type">INT / PK</td><td>—</td></tr>
+            <tr><td class="fk">plant_id</td><td class="type">INT / FK</td><td>→ plants.id</td></tr>
+            <tr><td>market</td><td class="type">VARCHAR</td><td>Pasar/kota</td></tr>
+            <tr><td>price_per_kg</td><td class="type">DECIMAL</td><td>Harga Rp/kg</td></tr>
+            <tr><td>recorded_at</td><td class="type">DATE</td><td>Tanggal data</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <p class="schema-name">📚 Tabel: knowledge_chunks</p>
+        <div class="schema-wrap">
+          <table class="schema-table">
+            <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+            <tr><td class="pk">id</td><td class="type">INT / PK</td><td>—</td></tr>
+            <tr><td>source_type</td><td class="type">ENUM</td><td>pdf/url/xlsx/docx</td></tr>
+            <tr><td>source_title</td><td class="type">VARCHAR</td><td>Judul sumber</td></tr>
+            <tr><td>chunk_text</td><td class="type">TEXT</td><td>Isi chunk</td></tr>
+            <tr><td>embedding</td><td class="type">BLOB/VECTOR</td><td>sqlite-vec / pgvector</td></tr>
+            <tr><td class="fk">plant_id</td><td class="type">INT / FK?</td><td>Opsional tag tanaman</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="feat-title">🔧 Multi-DB Support via Environment</div>
+      <div class="tech-row" style="margin-top:10px">
+        <span class="tech-chip">DB_CLIENT=sqlite3 → dev lokal</span>
+        <span class="tech-chip amber">DB_CLIENT=mysql2 → production shared hosting</span>
+        <span class="tech-chip sky">DB_CLIENT=pg → production cloud (Supabase/Neon)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5. PAGES ═══ -->
+<div class="section" id="pages">
+  <div class="container">
+    <div class="section-tag">08 — Routing</div>
+    <h2 class="section-title">Halaman & Routing</h2>
+    <p class="section-sub">Arsitektur SPA React dengan React Router. Express serve semua route ke <code>index.html</code> (catch-all). API terpisah di <code>/api/*</code>.</p>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:24px">
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/</div><div class="route-desc">Landing page — hero, 5 pilar, fitur unggulan, tanaman trending, berita pertanian terbaru</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/tanaman · /tanaman/:slug</div><div class="route-desc">Direktori & detail tanaman — harga, tips tanam, histori harga chart, tanya AI</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/harga · /inflasi · /inflasi/prediksi</div><div class="route-desc">Pilar 3 — Dashboard harga, pemantauan inflasi, heatmap provinsi, prediksi AI</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/pasar · /pasar/jual · /pasar/pesanan</div><div class="route-desc">Pilar 1 — Marketplace petani ke konsumen, listing produk, histori transaksi</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/matching · /matching/peta</div><div class="route-desc">Pilar 2 — Matching demand-supply antarwilayah, peta surplus/defisit interaktif</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/pembiayaan · /subsidi · /subsidi/cek-kelayakan</div><div class="route-desc">Pilar 4 — Info KUR, kalkulator kredit, cek kelayakan subsidi via AI</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/logistik · /logistik/gudang · /logistik/rantai-dingin</div><div class="route-desc">Pilar 5 — Direktori mitra logistik, peta cold storage, booking pengiriman</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/regulasi</div><div class="route-desc">Daftar peraturan & kebijakan pertanian terbaru (Permentan, SNI, dll)</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/dokumen</div><div class="route-desc">Admin: upload dokumen RAG global. User: koleksi dokumen personal yang disimpan</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/chat</div><div class="route-desc">Chat AI helper — RAG global + upload dokumen personal (📎), history per user</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/akun</div><div class="route-desc">Profil user, connect Puter.com, daftarkan nomor WA, dashboard credits, kelola grup WA</div></div></div>
+      <div class="route"><span class="route-method method-page">PAGE</span><div><div class="route-path">/keuangan</div><div class="route-desc">Laporan keuangan seller — pemasukan, potongan, PPN, saldo, histori tarik, grafik per minggu/bulan</div></div></div>
+      <div class="route"><span class="route-method method-api">API</span><div><div class="route-path">/api/payment/create · /api/payment/webhook · /api/wallet · /api/wallet/withdraw</div><div class="route-desc">Midtrans charge, webhook handler, saldo wallet, penarikan dana ke bank</div></div></div>
+      <div class="route"><span class="route-method method-api">API</span><div><div class="route-path">/api/chat · /api/chat/upload-doc · /api/rag · /api/credits</div><div class="route-desc">Chat AI, upload dokumen personal (ephemeral), RAG retrieval, credit summary</div></div></div>
+      <div class="route"><span class="route-method method-ws">WS</span><div><div class="route-path">/ws/whatsapp-bot</div><div class="route-desc">WebSocket bridge untuk Baileys WhatsApp — personal & group bot sessions</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 6. FEATURES ═══ -->
+<div class="section" id="features">
+  <div class="container">
+    <div class="section-tag">09 — Features</div>
+    <h2 class="section-title">Fitur Lengkap Platform</h2>
+    <p class="section-sub">Seluruh fitur yang mencakup 5 pilar Digitalisasi Ketahanan Pangan plus fitur AI chat, dokumen personal, dan WhatsApp bot.</p>
+
+    <div class="grid-3">
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f0faf0;font-size:22px">🛒</div>
+        <div class="feat-title">Marketplace Petani–Konsumen</div>
+        <div class="feat-desc">Pilar 1 — Listing produk, foto, harga, stok, dan kelola pesanan — sepenuhnya via WA atau website. Rating petani, histori transaksi, tanpa perantara.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#fff8e8;font-size:22px">🔀</div>
+        <div class="feat-title">Matching Demand-Supply</div>
+        <div class="feat-desc">Pilar 2 — Petani lapor stok, distributor lapor kebutuhan. Engine cocokkan berdasarkan komoditas + radius + harga. Notifikasi WA kedua pihak, deal dilakukan sendiri.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f0f8ff;font-size:22px">📈</div>
+        <div class="feat-title">Pemantauan Inflasi Pangan</div>
+        <div class="feat-desc">Pilar 3 — Chart inflasi real-time, heatmap per-provinsi, deteksi anomali harga, prediksi AI 2 minggu ke depan, dan alert otomatis via WA.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f5f0ff;font-size:22px">🚚</div>
+        <div class="feat-title">Logistik via Biteship API</div>
+        <div class="feat-desc">Pilar 4 — Cek ongkir multi-kurir (JNE/SiCepat/J&T/dll), booking pickup, generate resi, dan tracking real-time — semua bisa via command WA.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f0faf0;font-size:22px">🤖</div>
+        <div class="feat-title">AI Chat + Upload Dokumen</div>
+        <div class="feat-desc">Tanya-jawab RAG global + upload PDF/DOCX/XLSX personal (📎) ke chat. AI baca isi dokumen dan jawab pertanyaan tentangnya dalam sesi tersebut.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#fdf5ff;font-size:22px">📱</div>
+        <div class="feat-title">WhatsApp Bot (Personal & Grup)</div>
+        <div class="feat-desc">Semua 4 pilar + AI chat bisa diakses via WA. Bot grup dengan credits dari owner pengundang. Daily limit per grup. Upload dokumen via WA untuk dianalisis.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#fff8e8;font-size:22px">🌿</div>
+        <div class="feat-title">Ensiklopedia Tanaman</div>
+        <div class="feat-desc">Database per tanaman: musim tanam, kebutuhan pupuk, hama umum, varietas unggul. Filter berdasarkan region/provinsi dan kondisi tanah.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#fff0f0;font-size:22px">📋</div>
+        <div class="feat-title">Regulasi & Kebijakan</div>
+        <div class="feat-desc">Ringkasan Permentan, SNI komoditas, jadwal musim tanam nasional. AI bisa menjawab pertanyaan tentang regulasi ini langsung via chat atau WA.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#fffbf0;font-size:22px">🌤️</div>
+        <div class="feat-title">Info Cuaca Pertanian</div>
+        <div class="feat-desc">Widget cuaca dengan saran pertanian kontekstual (BMKG API). "Cuaca mendung di Bengkulu — hindari semprot pestisida hari ini."</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f0f4ff;font-size:22px">💳</div>
+        <div class="feat-title">Dashboard Credits & Akun</div>
+        <div class="feat-desc">Monitor penggunaan credits AI per sumber (web/WA personal/WA grup), kelola toko aktif, alert 70% budget, dan manajemen preferensi personal.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f5fff0;font-size:22px">🔔</div>
+        <div class="feat-title">Alert & Notifikasi</div>
+        <div class="feat-desc">Alert harga komoditas, notif match demand-supply baru, update status pengiriman, dan jadwal musim tanam — semua via WA dan web push.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-icon" style="background:#f0fff8;font-size:22px">📁</div>
+        <div class="feat-title">Knowledge Base Admin</div>
+        <div class="feat-desc">Admin upload PDF riset, XLSX data, atau URL artikel pertanian → di-embed ke RAG global → jadi pengetahuan semua user & bot WA. Progress real-time.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 7. PUTER ═══ -->
+<div class="section" id="puter">
+  <div class="container">
+    <div class="section-tag">10 — Puter Integration</div>
+    <h2 class="section-title">Integrasi Puter.com & WhatsApp Personal</h2>
+    <p class="section-sub">Kredensial Puter digunakan untuk autentikasi AI. Biaya AI ditanggung oleh credits user Puter ($0.50/bulan cukup untuk pemakaian normal).</p>
+
+    <div class="puter-block">
+      <h4>🔐 Alur Koneksi Akun Puter</h4>
+      <p>User klik "Hubungkan Puter.com" → Redirect ke OAuth Puter → Dapatkan token → Token disimpan terenkripsi di database kita (per user). Semua AI call menggunakan token ini, sehingga biaya dibebankan ke akun Puter user, bukan ke server kita.</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <strong>User belum punya akun / nomor WA belum terdaftar</strong>
+          <span>Tampilkan banner: "Untuk menggunakan fitur chat WhatsApp, daftar di sini dan hubungkan akun Puter.com Anda." — Link ke halaman register kita.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <strong>User daftar di website kita</strong>
+          <span>Input nama, email, nomor WhatsApp, dan pilih provinsi. Verifikasi nomor WA via OTP WhatsApp (menggunakan bot kita sendiri).</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <strong>Hubungkan akun Puter.com</strong>
+          <span>Di halaman /akun, klik "Hubungkan Puter". Puter OAuth flow. Token disimpan di DB. Pengguna sekarang bisa gunakan AI chat di web dan WA bot.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <strong>Chat via WhatsApp</strong>
+          <span>User kirim pesan ke nomor WA bot kita. Server identifikasi nomor WA → lookup user di DB → ambil Puter token → forward ke RAG + Puter AI → balas WA.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="feat-title" style="margin-bottom:10px">📱 WhatsApp Bot — Baileys.js</div>
+      <pre><span class="cm">// bot/whatsapp.ts</span>
+<span class="kw">import</span> makeWASocket <span class="kw">from</span> <span class="str">'@whiskeysockets/baileys'</span>
+
+sock.ev.<span class="fn">on</span>(<span class="str">'messages.upsert'</span>, <span class="kw">async</span> ({ messages }) => {
+  <span class="kw">for</span> (<span class="kw">const</span> msg <span class="kw">of</span> messages) {
+    <span class="kw">const</span> phone = msg.key.remoteJid.<span class="fn">split</span>(<span class="str">'@'</span>)[<span class="num">0</span>]
+    <span class="kw">const</span> user  = <span class="kw">await</span> db(<span class="str">'users'</span>).<span class="fn">where</span>({ phone_wa: phone }).<span class="fn">first</span>()
+
+    <span class="kw">if</span> (!user) {
+      <span class="kw">await</span> <span class="fn">sendWA</span>(phone, <span class="str">`Halo! Nomor Anda belum terdaftar.\nDaftar di: https://agrihub.id/daftar`</span>)
+      <span class="kw">return</span>
+    }
+
+    <span class="kw">const</span> context = <span class="kw">await</span> <span class="fn">retrieveRAG</span>(msg.message.conversation)
+    <span class="kw">const</span> reply   = <span class="kw">await</span> puter.ai.<span class="fn">chat</span>(<span class="fn">buildPrompt</span>(msg, context), {
+      token: user.puter_token  <span class="cm">// pakai token user, bukan server!</span>
+    })
+    <span class="kw">await</span> <span class="fn">sendWA</span>(phone, reply)
+  }
+})</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 8. GROUP BOT ═══ -->
+<div class="section" id="group-bot">
+  <div class="container">
+    <div class="section-tag">11 — WhatsApp Group</div>
+    <h2 class="section-title">WhatsApp Bot di Grup — Group Owner Credits</h2>
+    <p class="section-sub">Bot bisa diundang ke grup WhatsApp. Semua biaya AI di grup tersebut ditanggung oleh <strong>user yang mengundang bot</strong> (group owner), bukan anggota lain.</p>
+
+    <div class="puter-block">
+      <h4>💡 Konsep Utama: Group Owner = Penanggung Credits</h4>
+      <p>Saat bot diundang ke grup oleh User A, semua query AI dari siapapun di grup tersebut akan dieksekusi menggunakan Puter token milik User A. Anggota grup lain tidak perlu punya akun Puter sama sekali — mereka hanya "numpang" credits si pengundang.</p>
+    </div>
+
+    <div class="flow" style="margin-top:24px">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <strong>Bot diundang ke grup oleh User A</strong>
+          <span>Baileys trigger event <code>group-participants.update</code> dengan action <code>add</code>. Sistem catat: grup ID + nomor WA User A sebagai "group owner" di tabel <code>bot_groups</code>. Bot langsung kirim pesan perkenalan.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <strong>Bot kirim pesan perkenalan ke grup</strong>
+          <span>Contoh pesan: <em>"Halo semua! 👋 Saya AgriBot, asisten pertanian AI. Mention saya dengan @AgriBot untuk bertanya. Catatan: biaya AI ditanggung oleh @UserA yang mengundang saya. Ketik @AgriBot bantuan untuk melihat perintah."</em></span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <strong>Anggota grup kirim pesan dengan @mention atau reply bot</strong>
+          <span>Bot hanya merespons jika di-mention (<code>@AgriBot</code>) atau ada reply ke pesan bot. Pesan tanpa mention diabaikan — ini penting agar credits tidak boros.</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <strong>Sistem eksekusi AI pakai token milik group owner</strong>
+          <span>Lookup <code>bot_groups</code> → dapat user ID group owner → ambil Puter token mereka → jalankan RAG + AI call. Usage dicatat ke tabel <code>credit_usage</code> dengan tag <code>source=group</code>, <code>group_id</code>, dan <code>triggered_by</code> (nomor WA yang bertanya).</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <strong>Daily limit per grup tercapai</strong>
+          <span>Jika grup sudah memakai kuota harian (default: 30 query/hari), bot balas: <em>"Kuota harian grup ini sudah habis (30/30). Owner grup dapat melihat penggunaan di agrihub.id/akun atau ketik @AgriBot cek kredit."</em></span>
+        </div>
+      </div>
+      <div class="flow-step" style="border-bottom:none">
+        <div class="flow-num">6</div>
+        <div class="flow-content">
+          <strong>Group owner hapus akun / cabut koneksi Puter</strong>
+          <span>Sistem deteksi token tidak valid → kirim pesan ke semua grup milik owner tersebut → bot otomatis keluar (<code>sock.groupLeave(groupId)</code>). Anggota grup diberitahu dan disarankan cari owner baru.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <div class="feat-title" style="margin-bottom:10px">🗃️ Tabel: bot_groups</div>
+        <div class="schema-wrap">
+          <table class="schema-table">
+            <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+            <tr><td class="pk">id</td><td class="type">INT / PK</td><td>—</td></tr>
+            <tr><td>group_jid</td><td class="type">VARCHAR</td><td>ID grup WA (<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1d6565655d7a33686e">[email&#160;protected]</a>)</td></tr>
+            <tr><td>group_name</td><td class="type">VARCHAR</td><td>Nama grup (cached)</td></tr>
+            <tr><td class="fk">owner_user_id</td><td class="type">UUID / FK</td><td>→ users.id (pengundang)</td></tr>
+            <tr><td>daily_limit</td><td class="type">INT</td><td>Default: 30 query/hari</td></tr>
+            <tr><td>daily_used</td><td class="type">INT</td><td>Reset tiap tengah malam</td></tr>
+            <tr><td>is_active</td><td class="type">BOOLEAN</td><td>False jika owner cabut akun</td></tr>
+            <tr><td>joined_at</td><td class="type">TIMESTAMP</td><td>—</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="feat-title" style="margin-bottom:10px">📊 Tabel: credit_usage</div>
+        <div class="schema-wrap">
+          <table class="schema-table">
+            <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+            <tr><td class="pk">id</td><td class="type">INT / PK</td><td>—</td></tr>
+            <tr><td class="fk">user_id</td><td class="type">UUID / FK</td><td>Pemilik credits</td></tr>
+            <tr><td>source</td><td class="type">ENUM</td><td>web / wa_personal / wa_group</td></tr>
+            <tr><td class="fk">group_id</td><td class="type">INT / FK?</td><td>→ bot_groups.id (jika grup)</td></tr>
+            <tr><td>triggered_by</td><td class="type">VARCHAR</td><td>Nomor WA yang trigger (grup)</td></tr>
+            <tr><td>model_used</td><td class="type">VARCHAR</td><td>claude-haiku / gpt-4o-mini</td></tr>
+            <tr><td>tokens_in</td><td class="type">INT</td><td>Input tokens</td></tr>
+            <tr><td>tokens_out</td><td class="type">INT</td><td>Output tokens</td></tr>
+            <tr><td>est_cost_usd</td><td class="type">DECIMAL(8,6)</td><td>Estimasi biaya USD</td></tr>
+            <tr><td>created_at</td><td class="type">TIMESTAMP</td><td>—</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">⚙️ Implementasi — Deteksi Group Owner Event</div>
+      <pre><span class="cm">// bot/whatsapp.ts — deteksi bot diundang ke grup</span>
+sock.ev.<span class="fn">on</span>(<span class="str">'group-participants.update'</span>, <span class="kw">async</span> ({ id, participants, action }) => {
+  <span class="kw">const</span> botJid = sock.user.id
+
+  <span class="kw">if</span> (action === <span class="str">'add'</span> && participants.<span class="fn">includes</span>(botJid)) {
+    <span class="cm">// Bot baru diundang — cari siapa yang mengundang</span>
+    <span class="kw">const</span> meta   = <span class="kw">await</span> sock.<span class="fn">groupMetadata</span>(id)
+    <span class="kw">const</span> inviter = meta.participants.<span class="fn">find</span>(p => p.admin === <span class="str">'superadmin'</span> || p.admin === <span class="str">'admin'</span>)
+    <span class="kw">const</span> owner  = <span class="kw">await</span> db(<span class="str">'users'</span>).<span class="fn">where</span>({ phone_wa: inviter?.id.<span class="fn">split</span>(<span class="str">'@'</span>)[<span class="num">0</span>] }).<span class="fn">first</span>()
+
+    <span class="kw">if</span> (!owner?.puter_token) {
+      <span class="kw">await</span> <span class="fn">sendGroupMsg</span>(id, <span class="str">`Maaf, untuk menggunakan bot ini di grup, pengundang harus terdaftar & menghubungkan akun Puter di agrihub.id`</span>)
+      <span class="kw">await</span> sock.<span class="fn">groupLeave</span>(id)
+      <span class="kw">return</span>
+    }
+
+    <span class="kw">await</span> db(<span class="str">'bot_groups'</span>).<span class="fn">insert</span>({ group_jid: id, group_name: meta.subject, owner_user_id: owner.id })
+    <span class="kw">await</span> <span class="fn">sendGroupMsg</span>(id, <span class="str">`Halo semua! 👋 Saya AgriBot. Mention @AgriBot untuk bertanya.\n⚠️ Biaya AI ditanggung @${owner.name}. Ketik @AgriBot cek kredit untuk info penggunaan.`</span>)
+  }
+})</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 9. CREDIT USAGE ═══ -->
+<div class="section" id="credit-usage">
+  <div class="container">
+    <div class="section-tag">12 — Credit Usage</div>
+    <h2 class="section-title">Cek Penggunaan Credits — WA & Website</h2>
+    <p class="section-sub">User bisa memantau berapa credits yang sudah terpakai kapan saja — langsung dari chat WhatsApp dengan perintah teks, atau lewat dashboard di website.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="feat-icon" style="background:#f0faf0;font-size:22px">📱</div>
+        <div class="feat-title">Cek via WhatsApp — Perintah Teks</div>
+        <div class="feat-desc" style="margin-bottom:14px">User cukup kirim pesan ke bot tanpa perlu buka website. Respons langsung dikirim balik sebagai pesan WA.</div>
+        <div style="background:#1a2010;border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#c8e6b4;line-height:2">
+          <div style="color:#6a7d58">— Perintah yang tersedia —</div>
+          <div><span style="color:#ffd085">cek kredit</span> → ringkasan bulan ini</div>
+          <div><span style="color:#ffd085">cek kredit hari ini</span> → usage 24 jam terakhir</div>
+          <div><span style="color:#ffd085">cek kredit grup</span> → per-grup breakdown</div>
+          <div><span style="color:#ffd085">cek kredit 30 hari</span> → histori 30 hari</div>
+          <div><span style="color:#ffd085">set limit grup [nama] [angka]</span> → ubah daily limit</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="feat-icon" style="background:#fff8e8;font-size:22px">🌐</div>
+        <div class="feat-title">Cek via Website — Dashboard Credits</div>
+        <div class="feat-desc" style="margin-bottom:14px">Halaman <code>/akun</code> menampilkan dashboard penggunaan credits lengkap dengan grafik, breakdown per sumber, dan estimasi biaya USD.</div>
+        <div style="background:var(--green-50);border:1px solid var(--green-100);border-radius:10px;padding:14px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em"><span>Komponen Dashboard</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Total tokens bulan ini</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-700)">12,480</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Estimasi biaya</span><span style="font-family:'JetBrains Mono',monospace;color:var(--amber-600)">$0.021</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Sisa budget aman</span><span style="font-family:'JetBrains Mono',monospace;color:var(--green-600)">~95.8%</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Dari web chat</span><span style="font-family:'JetBrains Mono',monospace">3,200 token</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Dari WA personal</span><span style="font-family:'JetBrains Mono',monospace">4,150 token</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0"><span>Dari grup WA (3 grup)</span><span style="font-family:'JetBrains Mono',monospace">5,130 token</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">💬 Contoh Respons Bot WA — "cek kredit"</div>
+      <div style="background:#0d1a0d;border-radius:10px;padding:20px 22px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#c8e6b4;line-height:1.9">
+        <div style="color:#7dd87d;font-weight:600;margin-bottom:8px">📊 Ringkasan Credits Anda — Maret 2025</div>
+        <div>━━━━━━━━━━━━━━━━━━━━━━</div>
+        <div>🔋 Total pakai  : <span style="color:#ffd085">12.480 token</span></div>
+        <div>💰 Est. biaya   : <span style="color:#ffd085">~$0.021 / $0.50</span></div>
+        <div>✅ Sisa aman    : <span style="color:#7dd87d">95.8% budget tersisa</span></div>
+        <div style="margin-top:8px;color:#8aa87a">─ Breakdown sumber ─</div>
+        <div>🌐 Web chat     : 3.200 token</div>
+        <div>📱 WA personal  : 4.150 token</div>
+        <div>👥 Grup WA      : 5.130 token</div>
+        <div style="margin-top:8px;color:#8aa87a">─ Grup aktif (3) ─</div>
+        <div>  • Tani Maju Bengkulu  : 18/30 query hari ini</div>
+        <div>  • Kelompok Cabai Kep. : 5/30 query hari ini</div>
+        <div>  • Diskusi Padi Sawah  : 0/30 query hari ini</div>
+        <div style="margin-top:10px;color:#6a7d58;font-size:12px">Detail lengkap: agrihub.id/akun | Ketik "set limit grup [nama] [angka]" untuk ubah kuota</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">⚙️ Implementasi — Handler Perintah "cek kredit"</div>
+      <pre><span class="cm">// bot/commands/creditCheck.ts</span>
+<span class="kw">export async function</span> <span class="fn">handleCreditCheck</span>(user: User, args: <span class="kw">string</span>) {
+  <span class="kw">const</span> now    = <span class="kw">new</span> Date()
+  <span class="kw">const</span> period = args.<span class="fn">includes</span>(<span class="str">'hari ini'</span>) ? <span class="str">'today'</span>
+               : args.<span class="fn">includes</span>(<span class="str">'30 hari'</span>)  ? <span class="str">'30d'</span>
+               : <span class="str">'month'</span>
+
+  <span class="kw">const</span> usage = <span class="kw">await</span> db(<span class="str">'credit_usage'</span>)
+    .<span class="fn">where</span>({ user_id: user.id })
+    .<span class="fn">where</span>(<span class="str">'created_at'</span>, <span class="str">'>='</span>, <span class="fn">getPeriodStart</span>(period))
+    .<span class="fn">select</span>(
+      db.<span class="fn">raw</span>(<span class="str">'source, SUM(tokens_in + tokens_out) as total_tokens, SUM(est_cost_usd) as total_cost'</span>)
+    )
+    .<span class="fn">groupBy</span>(<span class="str">'source'</span>)
+
+  <span class="kw">const</span> groups = <span class="kw">await</span> db(<span class="str">'bot_groups'</span>)
+    .<span class="fn">where</span>({ owner_user_id: user.id, is_active: <span class="kw">true</span> })
+    .<span class="fn">select</span>(<span class="str">'group_name'</span>, <span class="str">'daily_used'</span>, <span class="str">'daily_limit'</span>)
+
+  <span class="kw">return</span> <span class="fn">formatCreditReport</span>(usage, groups)  <span class="cm">// format jadi teks WA-friendly</span>
+}
+
+<span class="cm">// API endpoint untuk website dashboard</span>
+app.<span class="fn">get</span>(<span class="str">'/api/credits/summary'</span>, authMiddleware, <span class="kw">async</span> (req, res) => {
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">getCreditSummary</span>(req.user.id, req.query.period)
+  res.<span class="fn">json</span>(data)  <span class="cm">// dipakai Recharts di halaman /akun</span>
+})</pre>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="card card-sm">
+        <div class="feat-title">🔔 Alert Otomatis</div>
+        <div class="feat-desc">Jika estimasi biaya bulan ini sudah mencapai 70% dari $0.50, bot otomatis kirim notifikasi WA ke owner: <em>"⚠️ Credits Anda sudah 70% terpakai bulan ini."</em></div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">📈 Grafik Website</div>
+        <div class="feat-desc">Di halaman <code>/akun</code>, tampilkan Recharts bar chart harian 30 hari terakhir, di-breakdown per sumber (web / WA personal / WA grup). Klik bar untuk detail.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">🕐 Reset Harian Otomatis</div>
+        <div class="feat-desc">Kolom <code>daily_used</code> di <code>bot_groups</code> di-reset tiap tengah malam via node-cron: <code>0 0 * * *</code>. Ini memastikan daily limit grup berjalan dengan benar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 10. AI MODEL ═══ -->
+<div class="section" id="ai-model">
+  <div class="container">
+    <div class="section-tag">13 — AI Cost</div>
+    <h2 class="section-title">Pemilihan Model AI — Hemat & Capable</h2>
+    <p class="section-sub">Data model diambil langsung dari <strong>developer.puter.com/ai/models</strong>. Karena biaya AI ditanggung credits Puter user ($0.50/bulan), kita prioritaskan model dengan input token paling murah tapi tetap capable untuk konteks bahasa Indonesia dan pertanian.</p>
+
+    <div class="card" style="margin-bottom:16px;background:var(--green-50);border-color:var(--green-200)">
+      <div class="feat-title" style="color:var(--green-800);margin-bottom:6px">💡 Simulasi Budget $0.50/bulan</div>
+      <p style="font-size:0.87rem;color:var(--green-700)">Dengan model <strong>Qwen3.5 Flash</strong> ($0.07/M input + $0.26/M output), asumsi rata-rata 500 token input + 400 token output per query: biaya ~$0.000196/query. Artinya $0.50 bisa menampung <strong>±2.550 query/bulan</strong> (~85 query/hari) — lebih dari cukup untuk pemakaian normal.</p>
+    </div>
+
+    <table class="ai-table">
+      <thead>
+        <tr><th>Model (via Puter)</th><th>Input/M</th><th>Output/M</th><th>Kualitas</th><th>Konteks</th><th>Rekomendasi</th></tr>
+      </thead>
+      <tbody>
+        <tr class="rec">
+          <td><strong>qwen/qwen3.5-flash-02-23</strong><br><small style="color:var(--muted);font-size:11px">Qwen3.5 Flash — 35B total, 3B aktif</small></td>
+          <td><span class="badge badge-green">$0.07</span></td>
+          <td><span class="badge badge-green">$0.26</span></td>
+          <td><span class="badge badge-green">Sangat Bagus</span></td>
+          <td>1M token</td>
+          <td>✅ <strong>Default utama</strong> — chat & WA bot</td>
+        </tr>
+        <tr class="rec">
+          <td><strong>qwen/qwen3-235b-a22b-2507</strong><br><small style="color:var(--muted);font-size:11px">Qwen3 235B — model besar, harga micro</small></td>
+          <td><span class="badge badge-green">$0.07</span></td>
+          <td><span class="badge badge-green">$0.10</span></td>
+          <td><span class="badge badge-green">Luar Biasa</span></td>
+          <td>256K token</td>
+          <td>✅ <strong>Terbaik value</strong> — RAG kompleks</td>
+        </tr>
+        <tr>
+          <td><strong>arcee-ai/trinity-large-preview:free</strong><br><small style="color:var(--muted);font-size:11px">400B total, 13B aktif — Apache 2.0</small></td>
+          <td><span class="badge badge-green">GRATIS</span></td>
+          <td><span class="badge badge-green">GRATIS</span></td>
+          <td><span class="badge badge-green">Bagus</span></td>
+          <td>128K token</td>
+          <td>✅ Fallback gratis jika credits menipis</td>
+        </tr>
+        <tr>
+          <td><strong>nvidia/nemotron-3-nano-30b-a3b</strong><br><small style="color:var(--muted);font-size:11px">30B total, 3B aktif — Mamba hybrid</small></td>
+          <td><span class="badge badge-green">$0.05</span></td>
+          <td><span class="badge badge-green">$0.20</span></td>
+          <td><span class="badge badge-amber">Cukup Bagus</span></td>
+          <td>1M token</td>
+          <td>✅ Query sederhana, 1M konteks panjang</td>
+        </tr>
+        <tr>
+          <td><strong>deepseek/deepseek-v3.2</strong><br><small style="color:var(--muted);font-size:11px">671B params — GPT-5 level, open-weight</small></td>
+          <td><span class="badge badge-green">$0.26</span></td>
+          <td><span class="badge badge-green">$0.38</span></td>
+          <td><span class="badge badge-green">Sangat Bagus</span></td>
+          <td>128K token</td>
+          <td>✅ Analisis dokumen & regulasi kompleks</td>
+        </tr>
+        <tr>
+          <td><strong>anthropic/claude-haiku-4-5</strong><br><small style="color:var(--muted);font-size:11px">Model Anthropic terbaru paling kecil</small></td>
+          <td><span class="badge badge-amber">$1.00</span></td>
+          <td><span class="badge badge-amber">$5.00</span></td>
+          <td><span class="badge badge-green">Sangat Bagus</span></td>
+          <td>200K token</td>
+          <td>⚠️ Opsional — user yang minta kualitas premium</td>
+        </tr>
+        <tr>
+          <td><strong>anthropic/claude-sonnet-4-6</strong><br><small style="color:var(--muted);font-size:11px">Near-flagship, SWE-bench 79.6%</small></td>
+          <td><span class="badge badge-red">$3.00</span></td>
+          <td><span class="badge badge-red">$15.00</span></td>
+          <td><span class="badge badge-green">Flagship</span></td>
+          <td>1M token</td>
+          <td>❌ Terlalu mahal untuk $0.50/bulan</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="margin-top:20px">
+      <div class="feat-title">🔀 Strategi Multi-Tier — Routing Cerdas per Jenis Query</div>
+      <div class="flow" style="margin-top:0">
+        <div class="flow-step">
+          <div class="flow-num" style="background:var(--green-100)">1</div>
+          <div class="flow-content">
+            <strong>Tier 0 — Gratis Sama Sekali (DB/cache lookup)</strong>
+            <span>Deteksi intent: harga hari ini? cuaca? jadwal tanam? → Jawab langsung dari database/cache tanpa panggil AI. Estimasi 40-50% query bisa diselesaikan di tier ini.</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:var(--green-100)">2</div>
+          <div class="flow-content">
+            <strong>Tier 1 — <code>qwen/qwen3.5-flash-02-23</code> (default semua chat & WA)</strong>
+            <span>Query percakapan umum, tanya-jawab pertanian, tips tanam. $0.07/M input — sangat hemat, 1M token konteks cukup untuk RAG dokumen panjang. Model ID yang dipakai di <code>puter.ai.chat()</code>.</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:var(--green-100)">3</div>
+          <div class="flow-content">
+            <strong>Tier 1B — <code>qwen/qwen3-235b-a22b-2507</code> (RAG multi-dokumen)</strong>
+            <span>Jika query butuh baca banyak chunk dokumen sekaligus (analisis silang regulasi, riset mendalam). Model 235B dengan output hanya $0.10/M — output token paling murah dari semua model capable di Puter.</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:var(--amber-100)">4</div>
+          <div class="flow-content">
+            <strong>Tier 2 — <code>arcee-ai/trinity-large-preview:free</code> (safety net gratis)</strong>
+            <span>Jika estimasi kredit user bulan ini sudah >80%, otomatis turun ke model gratis ini. Kualitas tetap bagus (400B params, 13B aktif). User tidak perlu tahu perpindahan model ini terjadi.</span>
+          </div>
+        </div>
+        <div class="flow-step" style="border-bottom:none">
+          <div class="flow-num" style="background:var(--amber-100)">5</div>
+          <div class="flow-content">
+            <strong>Cache Respons AI — hemat hingga 60-70%</strong>
+            <span>Pertanyaan populer (top 100 query per tanaman) di-cache 24 jam. "Cara tanam cabai organik?", "Hama utama padi sawah?" — tidak perlu panggil AI setiap kali.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="feat-title" style="margin-bottom:10px">⚙️ Implementasi — Model Router</div>
+      <pre><span class="cm">// ai/modelRouter.ts — pilih model berdasarkan konteks</span>
+<span class="kw">export function</span> <span class="fn">selectModel</span>(opts: {
+  queryType: <span class="str">'simple' | 'rag' | 'multi_doc'</span>,
+  creditUsedPct: <span class="kw">number</span>  <span class="cm">// 0–1</span>
+}): <span class="kw">string</span> {
+  <span class="cm">// Safety net: kalau sudah >80% budget bulan ini → model gratis</span>
+  <span class="kw">if</span> (opts.creditUsedPct > <span class="num">0.80</span>)
+    <span class="kw">return</span> <span class="str">'arcee-ai/trinity-large-preview'</span>  <span class="cm">// FREE</span>
+
+  <span class="cm">// RAG multi-dokumen → 235B, output token termurah</span>
+  <span class="kw">if</span> (opts.queryType === <span class="str">'multi_doc'</span>)
+    <span class="kw">return</span> <span class="str">'qwen/qwen3-235b-a22b-2507'</span>  <span class="cm">// $0.07/$0.10</span>
+
+  <span class="cm">// Default semua query → Qwen3.5 Flash</span>
+  <span class="kw">return</span> <span class="str">'qwen/qwen3.5-flash-02-23'</span>  <span class="cm">// $0.07/$0.26</span>
+}
+
+<span class="cm">// Contoh call ke Puter AI:</span>
+<span class="kw">const</span> model = <span class="fn">selectModel</span>({ queryType: <span class="str">'rag'</span>, creditUsedPct: <span class="num">0.35</span> })
+<span class="kw">const</span> reply = <span class="kw">await</span> puter.ai.<span class="fn">chat</span>(prompt, { model, token: user.puter_token })</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 9. UI DESIGN ═══ -->
+<div class="section" id="ui">
+  <div class="container">
+    <div class="section-tag">14 — UI/UX Design</div>
+    <h2 class="section-title">Desain UI/UX — Natural Agritech</h2>
+    <p class="section-sub">Estetika "earthy modern" — natural, hijau, hangat, tapi tetap modern dan profesional. Mengutamakan aksesibilitas untuk petani yang tidak terlalu tech-savvy.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="feat-title">🎨 Palet Warna</div>
+        <div class="palette">
+          <div class="swatch" style="background:#2d8c2d" data-label="#2d8c2d"></div>
+          <div class="swatch" style="background:#4dba4d" data-label="#4dba4d"></div>
+          <div class="swatch" style="background:#d6f5d6" data-label="#d6f5d6"></div>
+          <div class="swatch" style="background:#f5c242" data-label="#f5c242"></div>
+          <div class="swatch" style="background:#c4a87a" data-label="#c4a87a"></div>
+          <div class="swatch" style="background:#7a5c38" data-label="#7a5c38"></div>
+          <div class="swatch" style="background:#1a2010" data-label="#1a2010"></div>
+          <div class="swatch" style="background:#fafaf7" data-label="#fafaf7"></div>
+        </div>
+        <div style="margin-top:28px;font-size:0.85rem;color:var(--muted)">Hijau sebagai primary, amber/gold untuk accent highlight, earth-brown untuk warmth, off-white background agar tidak terlalu sterile.</div>
+      </div>
+      <div class="card">
+        <div class="feat-title">🔤 Tipografi</div>
+        <div style="margin-top:12px">
+          <div style="font-family:'Instrument Serif',serif;font-size:1.8rem;line-height:1.2;margin-bottom:8px">Instrument Serif</div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">Display font — untuk heading halaman, hero text, nama tanaman</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;margin-bottom:4px">DM Sans 500 — Body text</div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">Bersih, legible, modern tapi tidak kaku</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;margin-bottom:4px">JetBrains Mono — Data & kode</div>
+          <div style="font-size:0.8rem;color:var(--muted)">Untuk harga, angka statistik, dan UI teknis</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="card card-sm">
+        <div class="feat-title">✨ Animasi — Framer Motion</div>
+        <div class="feat-desc">Page transition fade-up, stagger animation kartu tanaman, scroll-triggered reveal untuk statistik harga. Spring physics untuk sidebar dan modal.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">📱 Mobile-First</div>
+        <div class="feat-desc">Layout bottom-nav untuk mobile. Ukuran teks minimal 16px. Tombol besar minimal 48px tap area. Petani sering akses dari HP android mid-range.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">♿ Aksesibilitas</div>
+        <div class="feat-desc">WCAG 2.1 AA contrast ratio. Semua teks penting bisa diperbesar tanpa layout rusak. Voice input support untuk chat AI (Web Speech API).</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">🌙 Dark Mode</div>
+        <div class="feat-desc">Dark mode otomatis ikuti sistem OS. Palet dark: deep forest green (#0d2010) background, lighter greens untuk surface, amber tetap sebagai accent.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">🇮🇩 Lokalisasi</div>
+        <div class="feat-desc">Bahasa Indonesia penuh. Format angka Rp (rupiah). Nama tanaman dalam Bahasa Indonesia + nama latin opsional. Kalender Jawa untuk musim tanam opsional.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="feat-title">⚡ Performance</div>
+        <div class="feat-desc">Core Web Vitals target: LCP &lt;2.5s, CLS &lt;0.1. Lazy load gambar, infinite scroll daftar tanaman, SWR cache untuk data harga.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;background:var(--green-50);border-color:var(--green-200)">
+      <div class="feat-title" style="color:var(--green-800)">🖼️ Library Animasi yang Digunakan</div>
+      <div class="tech-row" style="margin-top:12px">
+        <span class="tech-chip">framer-motion</span>
+        <span class="tech-chip">tailwindcss v4</span>
+        <span class="tech-chip amber">anime.js v4</span>
+        <span class="tech-chip sky">recharts (grafik harga)</span>
+        <span class="tech-chip sky">react-leaflet (peta)</span>
+        <span class="tech-chip earth">lottie-react (loading anim)</span>
+        <span class="tech-chip earth">react-hot-toast</span>
+        <span class="tech-chip red">shadcn/ui (base components)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 10. ROADMAP ═══ -->
+<div class="section" id="roadmap">
+  <div class="container">
+    <div class="section-tag">15 — Roadmap</div>
+    <h2 class="section-title">Roadmap Sprint Development</h2>
+    <p class="section-sub">Estimasi 4 sprint masing-masing 2 minggu. Solo developer atau tim kecil 2-3 orang.</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot">S1</div>
+        <div class="tl-content">
+          <div class="tl-sprint">Sprint 1 — Minggu 1–2</div>
+          <div class="tl-title">Foundation & Core Backend</div>
+          <ul class="tl-tasks">
+            <li>Setup monorepo, Express + Vite, TypeScript config</li>
+            <li>Database schema + auto-migration system (knex + umzug)</li>
+            <li>Loading bar progress system saat download aset Vite</li>
+            <li>Auth system (JWT + Puter OAuth flow)</li>
+            <li>Seed database tanaman Indonesia (100+ tanaman)</li>
+            <li>API endpoints: /plants, /prices, /auth</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">S2</div>
+        <div class="tl-content">
+          <div class="tl-sprint">Sprint 2 — Minggu 3–4</div>
+          <div class="tl-title">RAG System & AI Chat</div>
+          <ul class="tl-tasks">
+            <li>Document parser: PDF, DOCX, XLSX, URL scraper</li>
+            <li>Chunking + embedding pipeline via Puter AI</li>
+            <li>Vector storage (sqlite-vec untuk dev, pgvector untuk prod)</li>
+            <li>RAG retrieval + Puter.ai.chat() integration</li>
+            <li>Chat UI dengan Framer Motion, message history</li>
+            <li>Cache layer untuk AI responses populer</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">S3</div>
+        <div class="tl-content">
+          <div class="tl-sprint">Sprint 3 — Minggu 5–6</div>
+          <div class="tl-title">WhatsApp Bot, Payments & User Features</div>
+          <ul class="tl-tasks">
+            <li>Midtrans integration: charge API, Snap token, webhook handler</li>
+            <li>Escrow flow: escrow hold → release → refund + auto-release 3 hari</li>
+            <li>Dispute system: tabel disputes, admin review flow, resolusi via WA</li>
+            <li>seller_wallets: saldo, pending, withdraw ke bank via Midtrans Transfer</li>
+            <li>Laporan keuangan: /keuangan dashboard + command LAPORAN/SALDO/TARIK via WA</li>
+            <li>Adjustable matching scale: SKALA MATCHING command + preference di DB</li>
+            <li>WhatsApp bot personal dengan Baileys.js (multi-session)</li>
+            <li>User registration + nomor WA verification via OTP</li>
+            <li>Puter.com account linking flow</li>
+            <li>Group bot: event group-participants.update, tabel bot_groups</li>
+            <li>Credit tracking: tabel credit_usage, log tiap AI call</li>
+            <li>Alert & notifikasi harga sistem + dashboard harga komoditas</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">S4</div>
+        <div class="tl-content">
+          <div class="tl-sprint">Sprint 4 — Minggu 7–8</div>
+          <div class="tl-title">Polish, Testing & Launch</div>
+          <ul class="tl-tasks">
+            <li>Animasi full: page transitions, stagger cards, scroll reveal</li>
+            <li>Mobile optimization, PWA + Service Worker</li>
+            <li>Dark mode implementation</li>
+            <li>Performance audit: Core Web Vitals, bundle size</li>
+            <li>Security audit: rate limiting, input sanitization, CSRF</li>
+            <li>Deploy: Railway/Render (backend) + Cloudflare (CDN)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>
+    <strong>AgriHub Indonesia</strong> — Website Architecture Plan<br>
+    Dibuat sebagai panduan pengembangan platform digitalisasi ketahanan pangan berbasis AI
+  </div>
+</footer>
+
+</body>
+</html>

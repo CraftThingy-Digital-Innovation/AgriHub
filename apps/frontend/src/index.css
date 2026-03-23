@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────── */
+@theme {
+  --color-green-50: #f0faf2;
+  --color-green-100: #d6f5dd;
+  --color-green-200: #aaeabs;
+  --color-green-400: #3fb868;
+  --color-green-500: #2d9a52;
+  --color-green-600: #2D6A4F;
+  --color-green-700: #1f4e3a;
+  --color-green-800: #1a3d2e;
+  --color-green-900: #0d2619;
+
+  --color-amber-400: #f5c242;
+  --color-amber-500: #e8a820;
+  --color-amber-600: #d4980f;
+
+  --color-earth-50: #faf7f2;
+  --color-earth-100: #f0e8d8;
+  --color-earth-400: #c4a87a;
+  --color-earth-700: #7a5c38;
+  --color-earth-900: #3d2e18;
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ─── Base Styles ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8faf9;
+  color: #1a2010;
+  line-height: 1.65;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #b8d8c8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2D6A4F; }
+
+/* ─── Animations ────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideRight {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(45, 106, 79, 0); }
+}
+
+.animate-fadeIn   { animation: fadeIn 0.4s ease-out forwards; }
+.animate-slide-in { animation: slideRight 0.3s ease-out; }
+.animate-pulse-green { animation: pulse-green 2s infinite; }
+
+/* ─── Glass Card ────────────────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(45, 106, 79, 0.12);
+  border-radius: 16px;
+}
+
+/* ─── Hero Gradient ─────────────────────────────────────────────────────── */
+.hero-gradient {
+  background: linear-gradient(160deg, #0d2619 0%, #1f4e3a 45%, #2D6A4F 100%);
+}
+
+/* ─── Btn Primary ───────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #2D6A4F, #3fb868);
+  color: white;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(45, 106, 79, 0.35);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #2D6A4F;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: 1.5px solid #2D6A4F;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+.btn-secondary:hover {
+  background: #f0faf2;
+  transform: translateY(-1px);
+}
+
+/* ─── Input ─────────────────────────────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #d1e8db;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #1a2010;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.input-field:focus {
+  border-color: #2D6A4F;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
+}
+
+/* ─── Badge ─────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-green  { background: #d6f5dd; color: #1f4e3a; }
+.badge-amber  { background: #fef3cc; color: #5a3d00; }
+.badge-red    { background: #ffe4e4; color: #c03020; }
+.badge-blue   { background: #dbeafe; color: #1e40af; }
+.badge-purple { background: #ede9fe; color: #5b21b6; }
+
+/* ─── Card ───────────────────────────────────────────────────────────────── */
+.card {
+  background: white;
+  border: 1px solid rgba(45, 106, 79, 0.1);
+  border-radius: 16px;
+  padding: 20px 24px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover { box-shadow: 0 4px 20px rgba(45, 106, 79, 0.1); }
+.card-hover:hover { transform: translateY(-2px); }
+
+/* ─── Loading Bar ────────────────────────────────────────────────────────── */
+.loading-bar-track {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: rgba(45, 106, 79, 0.15);
+  z-index: 9999;
+}
+.loading-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2D6A4F, #3fb868, #f5c242);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ─── Sidebar  ───────────────────────────────────────────────────────────── */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  color: #4a6358;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.sidebar-link:hover { background: #f0faf2; color: #2D6A4F; }
+.sidebar-link.active { background: linear-gradient(135deg, #2D6A4F, #3fb868); color: white; }
+.sidebar-link.active span { color: white !important; }
+
+/* ─── Stat Card ──────────────────────────────────────────────────────────── */
+.stat-card {
+  background: white;
+  border: 1px solid rgba(45,106,79,0.1);
+  border-radius: 16px;
+  padding: 20px;
+}
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0d2619;
+  line-height: 1;
+}
+.stat-label { font-size: 13px; color: #5a7060; margin-top: 4px; }
+.stat-change { font-size: 12px; font-weight: 600; margin-top: 6px; }
+.stat-change.up   { color: #2D6A4F; }
+.stat-change.down { color: #c03020; }
