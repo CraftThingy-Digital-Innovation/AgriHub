@@ -322,9 +322,26 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
 
   try {
     // ── Command Parser (Panggil dengan cleanUpper agar @Bot MENU tetap terbaca MENU) ──
-    const isCommand = ['DAFTAR TOKO', 'JUAL ', 'ONGKIR ', 'STOK', 'PESANAN', 'MENU', 'HELP'].some(c => cleanUpper.startsWith(c));
+    const isCommand = ['DAFTAR TOKO', 'JUAL ', 'ONGKIR ', 'STOK', 'PESANAN', 'MENU', 'HELP', 'LINK '].some(c => cleanUpper.startsWith(c));
 
     if (isCommand) {
+        if (cleanUpper.startsWith('LINK ')) {
+            const inputPhone = cleanText.slice(5).trim().replace(/[^0-9]/g, '');
+            if (inputPhone.length < 9) {
+                await sendWAMessage(jid, '📝 *Format:* LINK [Nomor HP Anda]\nContoh: LINK 085188000139');
+                return;
+            }
+            const targetUser = await db('users').where('phone', 'like', `%${inputPhone.slice(-9)}%`).first();
+            if (!targetUser) {
+                await sendWAMessage(jid, `❌ Nomor *${inputPhone}* tidak ditemukan di database AgriHub. Pastikan Anda sudah mendaftar di web.`);
+                return;
+            }
+            // Tautkan LID saat ini ke user tersebut
+            await db('users').where({ id: targetUser.id }).update({ whatsapp_lid: sender });
+            await sendWAMessage(jid, `✅ *Berhasil!* Akun AgriHub (${targetUser.name}) kini tertaut dengan ID WhatsApp ini.\n\nSekarang Anda bisa menggunakan Asisten AI dan mengelola grup!`);
+            return;
+        }
+
         if (cleanUpper.startsWith('DAFTAR TOKO')) {
             const parts = cleanText.split('|').map(s => s.trim());
             if (parts.length < 3) {
@@ -418,7 +435,7 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
         }
 
         if (cleanUpper === 'MENU' || cleanUpper === 'HELP') {
-            await sendWAMessage(jid, `🌾 *Menu AgriHub*\n\n• DAFTAR TOKO | nama | kab | prov | produk\n• JUAL [nama] [harga] [stok]\n• STOK\n• PESANAN\n• ONGKIR [asal] [tujuan] [berat]\n\nAtau tanya saja langsung ke AI!`);
+            await sendWAMessage(jid, `🌾 *Menu AgriHub*\n\n• DAFTAR TOKO | nama | kab | prov | produk\n• JUAL [nama] [harga] [stok]\n• STOK\n• PESANAN\n• ONGKIR [asal] [tujuan] [berat]\n• LINK [NomorHP] (Tautkan WA ini ke akun Anda)\n\nAtau tanya saja langsung ke AI!`);
             return;
         }
     }
@@ -459,7 +476,7 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
          // Private Chat: Check user sendiri (user sudah di-resolve di atas)
          if (!user) {
            const senderPhone = sender.split('@')[0].replace(/[^0-9]/g, '');
-           await sendWAMessage(jid, `👋 *Halo! Sepertinya Anda belum terdaftar di AgriHub.*\n\nSilakan daftar di link berikut agar langsung terisi otomatis:\n👉 https://agrihub.id/login?mode=register&phone=${senderPhone}`);
+           await sendWAMessage(jid, `👋 *Halo! Sepertinya Anda belum terdaftar atau identitas WA Anda belum tertaut.*\n\n✅ *Sudah punya akun?*\nKetik: **LINK [NomorHP]**\n_(Contoh: LINK 0812345678)_\n\n🆕 *Belum punya akun?*\nDaftar di: https://agrihub.id/login?mode=register&phone=${senderPhone}`);
            return;
          }
          if (!user.puter_token) {
