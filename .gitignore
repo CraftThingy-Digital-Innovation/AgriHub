@@ -4,7 +4,8 @@ node_modules/
 .pnp.js
 
 # Build outputs
-dist/
+# Kita perlu meng-track dist dan public di apps/backend untuk deployment Hostinger
+# dist/  <-- Comment this to allow tracking
 build/
 *.tsbuildinfo
 
