@@ -19,7 +19,8 @@ build/
 *.db-shm
 *.db-wal
 
-# WhatsApp session
+# WhatsApp session (Baileys)
+wa-auth/
 .baileys/
 baileys_auth_info/
 
