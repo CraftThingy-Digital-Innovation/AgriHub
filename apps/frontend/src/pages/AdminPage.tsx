@@ -125,52 +125,97 @@ function DashboardTab() {
 
 function WATab() {
   const qc = useQueryClient();
+  const [pairingPhone, setPairingPhone] = useState('');
+  const [pairingCode, setPairingCode] = useState('');
+  
   const { data, refetch } = useQuery({
     queryKey: ['admin-wa'],
     queryFn: () => api.get('/admin/wa-status').then(r => r.data.data),
     refetchInterval: 3000, // cek setiap 3 detik
   });
+
   const connectMut = useMutation({
     mutationFn: () => api.post('/admin/wa-connect'),
     onSuccess: () => { setTimeout(() => qc.invalidateQueries({ queryKey: ['admin-wa'] }), 2000); },
+  });
+
+  const pairingMut = useMutation({
+    mutationFn: (phone: string) => api.post('/admin/wa-pairing-code', { phone }).then(r => r.data.data.code),
+    onSuccess: (code) => {
+      setPairingCode(code);
+      qc.invalidateQueries({ queryKey: ['admin-wa'] });
+    }
   });
 
   const status = data as { isConnected: boolean; hasQR: boolean; qrCode: string } | undefined;
 
   return (
     <div className="card max-w-lg mx-auto text-center py-8">
-      <div className="text-5xl mb-4">{status?.isConnected ? '✅' : status?.hasQR ? '📱' : '⚪'}</div>
+      <div className="text-5xl mb-4">{status?.isConnected ? '✅' : (status?.hasQR || pairingCode) ? '📱' : '⚪'}</div>
       <h2 className="font-bold text-green-900 text-xl mb-2">
-        {status?.isConnected ? 'WhatsApp Bot Terhubung' : status?.hasQR ? 'Scan QR Code' : 'Bot Tidak Aktif'}
+        {status?.isConnected ? 'WhatsApp Bot Terhubung' : (status?.hasQR || pairingCode) ? 'Hubungkan Perangkat' : 'Bot Tidak Aktif'}
       </h2>
       <p className="text-sm text-green-600 mb-5">
         {status?.isConnected
           ? 'Bot aktif dan menerima pesan. Session tersimpan permanen.'
-          : status?.hasQR
-          ? 'Buka WhatsApp HP → ⋮ → Perangkat Tertaut → Tautkan Perangkat'
-          : 'Set ENABLE_WHATSAPP=true di .env lalu klik Hubungkan.'}
+          : 'Gunakan QR Code atau Pairing Code untuk menghubungkan akun WhatsApp Bot.'}
       </p>
 
-      {status?.hasQR && (
-        <div className="bg-white border-2 border-green-200 rounded-2xl p-6 mb-6 inline-block shadow-sm">
-          <p className="text-green-600 text-center text-sm font-semibold mb-4">Scan QR Code</p>
-          <div className="bg-white p-2 rounded-lg">
-            <QRCodeSVG value={status.qrCode} size={200} level="M" includeMargin={false} />
+      {!status?.isConnected && (
+        <div className="space-y-6 mb-8">
+          {/* QR Code Option */}
+          {status?.hasQR && (
+            <div className="bg-white border-2 border-green-200 rounded-2xl p-6 inline-block shadow-sm">
+              <p className="text-green-600 text-center text-sm font-semibold mb-4">Metode 1: Scan QR Code</p>
+              <div className="bg-white p-2 rounded-lg">
+                <QRCodeSVG value={status.qrCode} size={200} level="M" includeMargin={false} />
+              </div>
+            </div>
+          )}
+
+          {/* Pairing Code Option */}
+          <div className="bg-green-50 rounded-2xl p-6 border border-green-100 max-w-sm mx-auto">
+            <p className="text-green-800 text-sm font-bold mb-3">Metode 2: Pairing Code (Tanpa Kamera)</p>
+            {pairingCode ? (
+              <div className="space-y-3">
+                <div className="text-3xl font-mono font-black tracking-[0.3em] text-green-700 bg-white p-4 rounded-xl border-2 border-green-400">
+                  {pairingCode}
+                </div>
+                <p className="text-[10px] text-green-600 leading-tight">
+                  Masukkan kode di atas pada HP Anda:<br/>
+                  <b>WA → Perangkat Tertaut → Tautkan Perangkat → Tautkan dengan nomor telepon saja</b>
+                </p>
+                <button onClick={() => setPairingCode('')} className="text-[10px] text-green-400 underline italic">Gunakan nomor lain / QR</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <input 
+                  className="input-field text-center font-bold tracking-widest" 
+                  placeholder="628xxxxxxxxxx" 
+                  value={pairingPhone} 
+                  onChange={e => setPairingPhone(e.target.value)}
+                />
+                <button 
+                  onClick={() => pairingMut.mutate(pairingPhone)} 
+                  disabled={pairingMut.isPending || !pairingPhone}
+                  className="btn-primary w-full justify-center text-xs py-2 shadow-md hover:shadow-lg disabled:opacity-50"
+                >
+                  {pairingMut.isPending ? '⏳ Meminta Kode...' : '⌨ Dapatkan Kode Pairing'}
+                </button>
+              </div>
+            )}
           </div>
-          <p className="text-[10px] text-green-400 mt-4 max-w-[200px] mx-auto break-all font-mono opacity-50">
-            {status.qrCode.slice(0, 40)}...
-          </p>
         </div>
       )}
 
       <div className="flex justify-center gap-3">
-        {!status?.isConnected && (
+        {!status?.isConnected && !status?.hasQR && !pairingCode && (
           <button onClick={() => connectMut.mutate()} disabled={connectMut.isPending}
             className="btn-primary disabled:opacity-50">
-            {connectMut.isPending ? '⏳ Menghubungkan...' : '🔗 Hubungkan Bot'}
+            {connectMut.isPending ? '⏳ Menghubungkan...' : '🔗 Aktifkan Bot'}
           </button>
         )}
-        <button onClick={() => refetch()} className="btn-secondary">🔄 Refresh</button>
+        <button onClick={() => refetch()} className="btn-secondary">🔄 Refresh Status</button>
       </div>
 
       {status?.isConnected && (
