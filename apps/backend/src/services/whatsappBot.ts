@@ -353,7 +353,7 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
 
             const user = await db('users').where('phone', 'like', `%${phone.slice(-9)}%`).first();
             if (!user) {
-                await sendWAMessage(jid, `❌ Nomor ${phone} belum terdaftar di AgriHub.\n\nDaftar di: https://agrihub.id/daftar`);
+                await sendWAMessage(jid, `❌ Nomor ${phone} belum terdaftar di AgriHub.\n\nDaftar di: https://agrihub.rumah-genbi.com/daftar`);
                 return;
             }
             const existingStore = await db('stores').where({ owner_id: user.id }).first();
@@ -461,7 +461,7 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
          }
 
          if (!owner.puter_token) {
-           if (isMentioned) await sendWAMessage(jid, `🔌 Penanggung jawab grup ini (@${owner.phone.split(':')[0]}) belum menghubungkan akun Puter.com.\n\nHarap hubungkan di: https://agrihub.id/app?action=connect-puter`);
+           if (isMentioned) await sendWAMessage(jid, `🔌 Penanggung jawab grup ini (@${owner.phone.split(':')[0]}) belum menghubungkan akun Puter.com.\n\nHarap hubungkan di: https://agrihub.rumah-genbi.com/app?action=connect-puter`);
            return;
          }
 
