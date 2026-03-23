@@ -230,9 +230,9 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
   const botFullId = waSocket?.user?.id || '';
   const botId = botFullId.split('@')[0].split(':')[0] || '';
   const botLidFull = (waSocket?.user as any)?.lid || '';
-  const botLid = botLidFull.split('@')[0] || '';
+  const botLid = botLidFull.split('@')[0].split(':')[0] || '';
   
-  const botJids = [botFullId, botId + '@s.whatsapp.net', botLidFull].filter(Boolean);
+  const botJids = [botFullId, botId + '@s.whatsapp.net', botLidFull, botLid + '@lid'].filter(Boolean);
   
   const contextInfo = 
     msg.message?.extendedTextMessage?.contextInfo || 
