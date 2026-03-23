@@ -9,7 +9,8 @@
     "dev:frontend": "npm run dev --prefix apps/frontend",
     "install:all": "npm install --prefix apps/backend --legacy-peer-deps && npm install --prefix apps/frontend --legacy-peer-deps",
     "build:frontend": "npm run build --prefix apps/frontend",
-    "build:backend": "npm run build --prefix apps/backend"
+    "build:backend": "npm run build --prefix apps/backend",
+    "build:prod": "node scripts/build-prod.js"
   },
   "engines": {
     "node": ">=20.0.0",
