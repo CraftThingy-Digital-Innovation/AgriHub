@@ -11,10 +11,18 @@ import MatchingPage from './pages/MatchingPage';
 import OrdersPage from './pages/OrdersPage';
 import WalletPage from './pages/WalletPage';
 import SellerPage from './pages/SellerPage';
+import AdminPage from './pages/AdminPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore(s => s.token);
   if (!token) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore(s => s.user);
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/app" replace />;
   return <>{children}</>;
 }
 
@@ -40,6 +48,7 @@ export default function App() {
           <Route path="pesanan" element={<OrdersPage />} />
           <Route path="dompet" element={<WalletPage />} />
           <Route path="toko" element={<SellerPage />} />
+          <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
