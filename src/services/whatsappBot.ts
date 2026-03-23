@@ -24,6 +24,9 @@ let isConnected = false;
 let qrCode = '';
 const logger = pino({ level: 'silent' });
 
+// Sesi penanggung jawab grup (Map<groupJid + senderLid, { userId, expires }>)
+const pendingAssignments = new Map<string, { userId: string, expires: number }>();
+
 // ─── Database Auth State Provider ─────────────────────────────────────────
 
 async function ensureAuthTable() {
@@ -144,6 +147,14 @@ export async function connectWhatsApp(): Promise<void> {
         console.log('🤖 Identity:', JSON.stringify(waSocket?.user || {}, null, 2));
         (waSocket as any)._lastIdentity = identityStr;
       }
+
+      // Cleanup pending assignments berkala (setiap 1 menit)
+      setInterval(() => {
+        const now = Date.now();
+        for (const [key, val] of pendingAssignments.entries()) {
+          if (val.expires < now) pendingAssignments.delete(key);
+        }
+      }, 60000);
     }
   });
 
@@ -441,7 +452,34 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
     }
 
     // ── AI Hub Interaction ──
-    if (isGroup && !isMentioned) return;
+    if (isGroup && !isMentioned) {
+        // Cek apakah user membalas tawaran jadi penanggung jawab (IYA/YA)
+        const pending = pendingAssignments.get(jid + sender);
+        if (pending && (upper === 'YA' || upper === 'IYA')) {
+            if (pending.expires < Date.now()) {
+                pendingAssignments.delete(jid + sender);
+                return;
+            }
+            
+            await db('group_credits').where({ group_jid: jid }).update({ 
+                owner_id: pending.userId,
+                updated_at: new Date().toISOString()
+            });
+
+            pendingAssignments.delete(jid + sender);
+            
+            const freshUser = await db('users').where({ id: pending.userId }).first();
+            let msgText = `✅ *Berhasil!* Anda sekarang adalah penanggung jawab resmi untuk AI di grup ini.`;
+            
+            if (freshUser && !freshUser.puter_token) {
+                msgText += `\n\n🔌 *Satu langkah lagi:* Akun Anda belum terhubung ke Puter.com. Silakan klik link sakti ini untuk langsung menghubungkan:\n👉 https://agrihub.rumah-genbi.com/app?action=connect-puter`;
+            }
+            
+            await sendWAMessage(jid, msgText);
+            return;
+        }
+        return;
+    }
     
     if (!isCommand) {
        // Cek siapa yang bertanggung jawab atas grup ini
@@ -450,8 +488,19 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
        if (isGroup) {
          const groupMeta = await db('group_credits').where({ group_jid: jid }).first();
          if (!groupMeta || !groupMeta.owner_id) {
-           if (isMentioned) await sendWAMessage(jid, `⚠️ Grup ini belum memiliki penanggung jawab resmi.\n\nSilakan tambahkan ulang bot ke grup atau minta penanggung jawab (yang meng-add bot) untuk mengirim pesan "Halo" secara pribadi ke bot terlebih dahulu agar identitasnya terverifikasi.`);
-           return;
+            if (isMentioned) {
+                if (!user) {
+                    const isRealPhone = sender.endsWith('@s.whatsapp.net');
+                    const decodedPhone = isRealPhone ? sender.split('@')[0].replace(/[^0-9]/g, '') : '';
+                    const phoneParam = decodedPhone ? `&phone=${decodedPhone}` : '';
+                    await sendWAMessage(jid, `⚠️ Grup ini belum memiliki penanggung jawab AI.\n\nSepertinya Anda belum terdaftar. Silakan daftar dulu melalui link ini agar bisa mengelola grup:\n👉 https://agrihub.rumah-genbi.com/login?mode=register${phoneParam}&action=link&lid=${sender}`);
+                } else {
+                    // Tawarkan jadi penanggung jawab
+                    pendingAssignments.set(jid + sender, { userId: user.id, expires: Date.now() + 300000 }); // 5 menit
+                    await sendWAMessage(jid, `👋 Halo *${user.name}*!\n\nGrup ini belum memiliki penanggung jawab resmi untuk penggunaan AI.\n\nApakah Anda bersedia menjadi penanggung jawab grup ini? (Seluruh penggunaan AI di grup ini akan menggunakan profil & kredit Anda).\n\nBalas *YA* untuk mengkonfirmasi.`);
+                }
+            }
+            return;
          }
 
          const owner = await db('users').where({ id: groupMeta.owner_id }).first();
