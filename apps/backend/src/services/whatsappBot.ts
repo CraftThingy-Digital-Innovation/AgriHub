@@ -274,11 +274,16 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
     }
 
     // ── AI Chat (jika bukan command) ───────────────────────────────────────
-    // Grup: cek kredit dulu
+    // Deteksi mention di grup
+    const botId = waSocket?.user?.id?.split(':')[0] || '';
+    const isMentioned = text.includes(`@${botId}`);
+
     if (isGroup) {
+      if (!isMentioned) return; // Hiraukan chat grup biasa jika tidak di-tag
+
       const credit = await checkGroupCredit(jid);
       if (!credit.allowed) {
-        // Hanya reply jika di-mention bot
+        await sendWAMessage(jid, `⚠️ *AI Grup Nonaktif*\n\n${credit.reason || 'Kredit habis.'}\nHubungi admin untuk aktivasi.`);
         return;
       }
       await deductGroupCredit(jid, 0.05);
@@ -289,7 +294,9 @@ async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
     const user = await db('users').where('phone', 'like', `%${userPhone.slice(-9)}%`).first();
 
     const aiReply = await chatWithAI({
-      message: text, history: [], userId: user ? user.id : 'wa-bot',
+      message: text.replace(`@${botId}`, '').trim(), 
+      history: [], 
+      userId: user ? user.id : 'wa-bot',
       useRag: true,
     });
 

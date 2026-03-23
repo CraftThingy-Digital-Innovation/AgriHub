@@ -296,11 +296,15 @@ async function handleMessage(msg) {
             return;
         }
         // ── AI Chat (jika bukan command) ───────────────────────────────────────
-        // Grup: cek kredit dulu
+        // Deteksi mention di grup
+        const botId = waSocket?.user?.id?.split(':')[0] || '';
+        const isMentioned = text.includes(`@${botId}`);
         if (isGroup) {
+            if (!isMentioned)
+                return; // Hiraukan chat grup biasa jika tidak di-tag
             const credit = await (0, aiService_2.checkGroupCredit)(jid);
             if (!credit.allowed) {
-                // Hanya reply jika di-mention bot
+                await sendWAMessage(jid, `⚠️ *AI Grup Nonaktif*\n\n${credit.reason || 'Kredit habis.'}\nHubungi admin untuk aktivasi.`);
                 return;
             }
             await (0, aiService_2.deductGroupCredit)(jid, 0.05);
@@ -309,7 +313,9 @@ async function handleMessage(msg) {
         const userPhone = sender.split('@')[0].replace(/[^0-9]/g, '');
         const user = await (0, knex_1.default)('users').where('phone', 'like', `%${userPhone.slice(-9)}%`).first();
         const aiReply = await (0, aiService_1.chatWithAI)({
-            message: text, history: [], userId: user ? user.id : 'wa-bot',
+            message: text.replace(`@${botId}`, '').trim(),
+            history: [],
+            userId: user ? user.id : 'wa-bot',
             useRag: true,
         });
         await sendWAMessage(jid, `🌱 ${aiReply.reply}${aiReply.ragSources.length > 0 ? `\n\n_📚 Sumber: ${aiReply.ragSources.join(', ')}_` : ''}`);
