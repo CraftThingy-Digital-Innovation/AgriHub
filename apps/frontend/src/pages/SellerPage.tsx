@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
+import MapPicker from '../components/MapPicker';
 
 interface Product {
   id: string;
@@ -36,6 +37,9 @@ export default function SellerPage() {
     kecamatan: '',
     postal_code: '',
     address: '',
+    area_id: '',
+    latitude: 0,
+    longitude: 0,
     product_types: '',
     description: ''
   });
@@ -137,7 +141,9 @@ export default function SellerPage() {
   const handleOpenRegister = () => {
     setStoreForm({
       name: '', provinsi: '', kabupaten: '', kecamatan: '', 
-      postal_code: '', address: '', product_types: '', description: ''
+      postal_code: '', address: '', area_id: '',
+      latitude: -6.2, longitude: 106.8,
+      product_types: '', description: ''
     });
     setShowRegister(true);
   };
@@ -150,59 +156,99 @@ export default function SellerPage() {
       kecamatan: store.kecamatan || '',
       postal_code: store.postal_code || '',
       address: store.address || '',
+      area_id: store.area_id || '',
+      latitude: Number(store.latitude) || -6.2,
+      longitude: Number(store.longitude) || 106.8,
       product_types: Array.isArray(store.product_types) ? store.product_types.join(', ') : store.product_types,
       description: store.description || ''
     });
     setShowStoreEdit(true);
   };
 
+  const handleLocationSelect = (data: any) => {
+    setStoreForm(f => ({
+      ...f,
+      latitude: data.lat,
+      longitude: data.lng,
+      address: data.address,
+      postal_code: data.postalCode,
+      provinsi: data.province,
+      kabupaten: data.city,
+      kecamatan: data.kecamatan,
+      area_id: data.areaId
+    }));
+  };
+
   if (storeLoading) return <div className="p-10 text-center animate-pulse text-green-600 font-medium">Memuat data toko...</div>;
 
   if (!store) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-green-900 mb-2">🏪 Toko Saya</h1>
-        <div className="card text-center py-16">
+        <div className="card text-center py-12 px-6">
           <div className="text-5xl mb-4">🌾</div>
           <h2 className="font-bold text-green-900 mb-2">Belum punya toko?</h2>
-          <p className="text-sm text-green-600 mb-6">Daftarkan toko Anda dan mulai jual produk pertanian langsung ke konsumen.</p>
+          <p className="text-sm text-green-600 mb-8">Daftarkan toko Anda dan mulai jual produk pertanian langsung ke konsumen.</p>
           {!showRegister ? (
             <button className="btn-primary" onClick={handleOpenRegister}>+ Daftar Toko Sekarang</button>
           ) : (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-left grid grid-cols-1 md:grid-cols-2 gap-3 max-w-xl mx-auto">
-              <div className="md:col-span-2">
-                <label className="text-xs font-bold text-green-800 mb-1 block">Nama Toko</label>
-                <input className="input-field" placeholder="Contoh: Tani Makmur Jaya" value={storeForm.name} onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-left space-y-6 max-w-2xl mx-auto">
+              {/* Map Section */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-green-800 uppercase tracking-wider">Langkah 1: Pilih Lokasi di Peta</label>
+                <MapPicker onLocationSelect={handleLocationSelect} />
               </div>
-              <div>
-                <label className="text-xs font-bold text-green-800 mb-1 block">Provinsi</label>
-                <input className="input-field" placeholder="Provinsi" value={storeForm.provinsi} onChange={e => setStoreForm(f => ({ ...f, provinsi: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-green-800 mb-1 block">Kabupaten</label>
-                <input className="input-field" placeholder="Kabupaten" value={storeForm.kabupaten} onChange={e => setStoreForm(f => ({ ...f, kabupaten: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-green-800 mb-1 block">Kecamatan</label>
-                <input className="input-field" placeholder="Kecamatan" value={storeForm.kecamatan} onChange={e => setStoreForm(f => ({ ...f, kecamatan: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-green-800 mb-1 block">Kode Pos</label>
-                <input className="input-field" placeholder="Contoh: 38353" value={storeForm.postal_code} onChange={e => setStoreForm(f => ({ ...f, postal_code: e.target.value }))} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs font-bold text-green-800 mb-1 block">Alamat Lengkap</label>
-                <textarea className="input-field h-20" placeholder="Jl. Raya Pertanian No. 1..." value={storeForm.address} onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs font-bold text-green-800 mb-1 block">Jenis Produk</label>
-                <input className="input-field" placeholder="Contoh: Cabai, Sayuran, Beras" value={storeForm.product_types} onChange={e => setStoreForm(f => ({ ...f, product_types: e.target.value }))} />
-              </div>
-              <div className="md:col-span-2 flex gap-2 pt-2">
-                <button className="btn-secondary flex-1 justify-center" onClick={() => setShowRegister(false)}>Batal</button>
-                <button className="btn-primary flex-1 justify-center" onClick={() => registerMutation.mutate(storeForm)} disabled={registerMutation.isPending}>
-                  {registerMutation.isPending ? '⏳ Mendaftar...' : '✅ Daftar Toko'}
-                </button>
+
+              {/* Form Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50/50 p-6 rounded-2xl border border-green-100">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Langkah 2: Lengkapi Data</label>
+                  <label className="text-[10px] text-green-600 mb-2 block italic">* Alamat otomatis terisi saat kamu klik di peta</label>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Nama Toko</label>
+                  <input className="input-field" placeholder="Contoh: Tani Makmur Jaya" value={storeForm.name} onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Alamat Lengkap (Pin Map)</label>
+                  <textarea className="input-field h-20 text-sm" placeholder="Jl. Raya Pertanian No. 1..." value={storeForm.address} onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Provinsi</label>
+                  <input className="input-field" value={storeForm.provinsi} onChange={e => setStoreForm(f => ({ ...f, provinsi: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Kabupaten</label>
+                  <input className="input-field" value={storeForm.kabupaten} onChange={e => setStoreForm(f => ({ ...f, kabupaten: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Kecamatan</label>
+                  <input className="input-field" value={storeForm.kecamatan} onChange={e => setStoreForm(f => ({ ...f, kecamatan: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Kode Pos</label>
+                  <input className="input-field" value={storeForm.postal_code} onChange={e => setStoreForm(f => ({ ...f, postal_code: e.target.value }))} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Biteship Area ID</label>
+                  <input className="input-field bg-gray-50 font-mono text-xs" readOnly value={storeForm.area_id} placeholder="Terisi otomatis..." />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-green-800 mb-1 block">Jenis Produk Yang Dijual</label>
+                  <input className="input-field" placeholder="Contoh: Cabai, Sayuran, Beras" value={storeForm.product_types} onChange={e => setStoreForm(f => ({ ...f, product_types: e.target.value }))} />
+                </div>
+
+                <div className="md:col-span-2 flex gap-3 mt-4">
+                  <button className="btn-secondary flex-1 justify-center" onClick={() => setShowRegister(false)}>Batal</button>
+                  <button className="btn-primary flex-1 justify-center" onClick={() => registerMutation.mutate(storeForm)} disabled={registerMutation.isPending}>
+                    {registerMutation.isPending ? '⏳ Mendaftar...' : '✅ Daftar Toko'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -218,7 +264,7 @@ export default function SellerPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-green-900">🏪 {store.name}</h1>
-            <button onClick={handleOpenStoreEdit} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors">Edit Profil</button>
+            <button onClick={handleOpenStoreEdit} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors font-bold">Edit Profil & Map</button>
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             <span className="badge badge-green font-mono">{store.store_code}</span>
@@ -236,7 +282,7 @@ export default function SellerPage() {
         {[
           { icon: '📦', label: 'Produk Aktif', value: (productsData?.data ?? []).filter((p: any) => p.is_active).length },
           { icon: '🛒', label: 'Pesanan Masuk', value: store.total_orders },
-          { icon: '💰', label: 'Total Penjualan', value: 'Coming Soon' }, // Placeholder for real stats later
+          { icon: '💰', label: 'Total Penjualan', value: 'Coming Soon' }, 
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div className="text-2xl mb-1">{s.icon}</div>
@@ -392,45 +438,74 @@ export default function SellerPage() {
         {showStoreEdit && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowStoreEdit(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden relative z-10">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden relative z-10">
               <div className="px-6 py-4 border-b border-green-100 bg-green-50/50 flex justify-between items-center text-green-900 font-bold">
-                <h3>Edit Profil Toko</h3>
+                <h3>Edit Profil & Lokasi Toko</h3>
                 <button onClick={() => setShowStoreEdit(false)}>✕</button>
               </div>
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[80vh]">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Nama Toko</label>
-                  <input className="input-field" value={storeForm.name} onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Provinsi</label>
-                  <input className="input-field" value={storeForm.provinsi} onChange={e => setStoreForm(f => ({ ...f, provinsi: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kabupaten</label>
-                  <input className="input-field" value={storeForm.kabupaten} onChange={e => setStoreForm(f => ({ ...f, kabupaten: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kecamatan</label>
-                  <input className="input-field" value={storeForm.kecamatan} onChange={e => setStoreForm(f => ({ ...f, kecamatan: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kode Pos</label>
-                  <input className="input-field" value={storeForm.postal_code} onChange={e => setStoreForm(f => ({ ...f, postal_code: e.target.value }))} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Alamat Lengkap</label>
-                  <textarea className="input-field h-20" value={storeForm.address} onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Deskripsi Toko</label>
-                  <textarea className="input-field h-20" value={storeForm.description} onChange={e => setStoreForm(f => ({ ...f, description: e.target.value }))} />
-                </div>
-                <div className="md:col-span-2 flex gap-3 pt-4">
+              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[85vh]">
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-4 rounded-xl space-y-4 border border-green-100">
+                    <div>
+                      <label className="text-xs font-bold text-green-800 mb-1 block">Nama Toko</label>
+                      <input className="input-field" value={storeForm.name} onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-green-800 mb-1 block">Alamat Lengkap (Pin Map)</label>
+                      <textarea className="input-field h-20 text-sm" value={storeForm.address} onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <label className="text-[10px] font-bold text-green-700 block uppercase">Provinsi</label>
+                        <input className="input-field text-xs py-2 bg-white" value={storeForm.provinsi} onChange={e => setStoreForm(f => ({ ...f, provinsi: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-green-700 block uppercase">Kabupaten</label>
+                        <input className="input-field text-xs py-2 bg-white" value={storeForm.kabupaten} onChange={e => setStoreForm(f => ({ ...f, kabupaten: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-green-700 block uppercase">Kecamatan</label>
+                        <input className="input-field text-xs py-2 bg-white" value={storeForm.kecamatan} onChange={e => setStoreForm(f => ({ ...f, kecamatan: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-green-700 block uppercase">Kode Pos</label>
+                        <input className="input-field text-xs py-2 bg-white" value={storeForm.postal_code} onChange={e => setStoreForm(f => ({ ...f, postal_code: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                       <div>
+                        <label className="text-[10px] font-bold text-green-700 block uppercase">Area ID (Biteship)</label>
+                        <input className="input-field text-[10px] py-1 font-mono bg-gray-50" readOnly value={storeForm.area_id} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-green-700 block uppercase">Koordinat GPS</label>
+                        <div className="text-[10px] font-mono text-green-600 bg-gray-50 p-1 rounded border border-green-50 truncate">
+                          {storeForm.latitude.toFixed(6)}, {storeForm.longitude.toFixed(6)}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-green-800 mb-1 block">Deskripsi Toko</label>
+                      <textarea className="input-field h-20 text-sm" value={storeForm.description} onChange={e => setStoreForm(f => ({ ...f, description: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
                    <button className="btn-secondary flex-1 justify-center" onClick={() => setShowStoreEdit(false)}>Batal</button>
-                   <button className="btn-primary flex-1 justify-center" onClick={() => updateStoreMutation.mutate(storeForm)} disabled={updateStoreMutation.isPending}>
+                   <button className="btn-primary flex-1 justify-center font-bold" onClick={() => updateStoreMutation.mutate(storeForm)} disabled={updateStoreMutation.isPending}>
                     {updateStoreMutation.isPending ? '⏳ Menyimpan...' : '💾 Simpan Perubahan'}
                    </button>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                   <label className="text-xs font-bold text-green-800 uppercase tracking-widest block">Update Lokasi di Peta</label>
+                   <MapPicker 
+                    initialLat={storeForm.latitude} 
+                    initialLng={storeForm.longitude} 
+                    onLocationSelect={handleLocationSelect} 
+                   />
+                   <p className="text-[10px] text-green-500 italic bg-green-50 p-2 rounded-lg border border-green-100">
+                     Geser marker atau klik peta untuk memperbarui koordinat GPS dan alamat toko secara otomatis.
+                   </p>
                 </div>
               </div>
             </motion.div>
