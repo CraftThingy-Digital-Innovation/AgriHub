@@ -80,6 +80,7 @@ export async function sendWAMessage(jid: string, text: string): Promise<void> {
 // ─── Commands Parser ──────────────────────────────────────────────────────
 
 async function handleMessage(msg: proto.IWebMessageInfo): Promise<void> {
+  if (!msg.key) return;
   const jid = msg.key.remoteJid!;
   const isGroup = jid.endsWith('@g.us');
   const text = (

@@ -1,4 +1,4 @@
-import db from '../config/knex';
+import db from '../../config/knex';
 import { v4 as uuidv4 } from 'uuid';
 
 const komoditasData = [
