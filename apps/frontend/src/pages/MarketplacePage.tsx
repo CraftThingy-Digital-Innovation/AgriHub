@@ -35,22 +35,40 @@ export default function MarketplacePage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {(data?.data ?? []).map((product: Record<string, unknown>, i: number) => (
+          {(data?.data ?? []).map((product: any, i: number) => (
             <motion.div
-              key={String(product.id)}
+              key={product.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="card card-hover cursor-pointer p-4"
+              className="card card-hover cursor-pointer p-0 overflow-hidden flex flex-col h-full shadow-sm"
             >
-              <div className="w-full h-28 rounded-xl bg-green-50 flex items-center justify-center text-4xl mb-3">🥬</div>
-              <div className="font-semibold text-green-900 text-sm truncate">{String(product.name)}</div>
-              <div className="text-xs text-green-600 mb-2">{String(product.store_name)} · {String(product.kabupaten)}</div>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-green-700 text-sm">
-                  Rp{Number(product.price_per_unit).toLocaleString('id-ID')}/{String(product.unit)}
-                </span>
-                <span className="badge badge-green text-[10px]">{Number(product.stock_quantity)} {String(product.unit)}</span>
+              <div className="w-full h-32 bg-green-50 flex items-center justify-center text-4xl relative">
+                {product.image_url ? (
+                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                ) : '🥦'}
+                {product.origin && (
+                  <div className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded text-[9px] font-bold text-green-800 shadow-sm border border-green-100 uppercase tracking-tighter">
+                    📍 {product.origin}
+                  </div>
+                )}
+              </div>
+              <div className="p-3 flex-1 flex flex-col">
+                <div className="font-bold text-green-900 text-sm truncate leading-tight mb-0.5">{product.name}</div>
+                <div className="text-[10px] text-green-600 mb-2 font-medium">📦 {product.store_name} · {product.kabupaten}</div>
+                
+                <div className="mt-auto pt-2 flex flex-col gap-1.5 border-t border-green-50">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-green-700 text-sm">
+                      Rp{Number(product.price_per_unit).toLocaleString('id-ID')}
+                      <span className="text-[9px] font-normal text-green-500 ml-0.5">/{product.unit}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-slate-400">STOK: {Number(product.stock_quantity)} {product.unit}</span>
+                    <button className="text-[10px] bg-green-600 text-white font-bold px-2 py-1 rounded">BELI</button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           ))}
