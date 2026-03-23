@@ -16,11 +16,11 @@ const config: knex.Knex.Config = client === 'sqlite3'
       useNullAsDefault: true,
       migrations: {
         directory: path.resolve(__dirname, '../db/migrations'),
-        extension: 'ts',
+        extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
       },
       seeds: {
         directory: path.resolve(__dirname, '../db/seeds'),
-        extension: 'ts',
+        extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
       },
     }
   : {
@@ -28,11 +28,11 @@ const config: knex.Knex.Config = client === 'sqlite3'
       connection: process.env.DATABASE_URL,
       migrations: {
         directory: path.resolve(__dirname, '../db/migrations'),
-        extension: 'ts',
+        extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
       },
       seeds: {
         directory: path.resolve(__dirname, '../db/seeds'),
-        extension: 'ts',
+        extension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
       },
     };
 
