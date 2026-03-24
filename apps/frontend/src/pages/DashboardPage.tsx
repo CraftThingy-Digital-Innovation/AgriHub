@@ -56,13 +56,12 @@ export default function DashboardPage() {
       }
 
       // Panggil cara resmi: signIn()
-      // Karena dipicu oleh klik manual, popup tidak akan diblokir browser.
       const signInResult = await puter.auth.signIn();
       console.log('Puter Auth Success:', signInResult);
 
-      const token = puter.auth.getToken();
+      const token = signInResult?.token;
       if (token) {
-        await api.patch('/auth/puter-token', { token });
+        await api.patch('/auth/puter-token', { token: token as string });
         updateUser({ puter_token: token as string });
       } else {
         throw new Error('Gagal mendapatkan token dari Puter setelah login.');
