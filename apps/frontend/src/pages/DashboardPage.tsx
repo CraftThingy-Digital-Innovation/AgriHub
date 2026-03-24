@@ -193,7 +193,7 @@ export default function DashboardPage() {
                     className="bg-green-50 p-4 rounded-xl mt-2 border border-green-100"
                   >
                     <p className="text-[10px] text-green-600 mb-2 text-left">
-                      Buka **puter.com**, login, buka Konsol (F12), dan ketik `puter.auth.getToken()` untuk mendapatkan token Anda.
+                      Buka **puter.com**, login, buka Konsol (F12), dan ketik `await puter.auth.signIn()` untuk mendapatkan token Anda.
                     </p>
                     <input 
                       className="input-field text-xs mb-2" 
