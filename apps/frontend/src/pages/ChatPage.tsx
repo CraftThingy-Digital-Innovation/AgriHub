@@ -279,7 +279,7 @@ export default function ChatPage() {
   const docs: RAGDoc[] = docsData?.data ?? [];
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] gap-4 max-w-6xl mx-auto">
+    <div className="flex h-[calc(100vh-4rem)] gap-4 max-w-6xl mx-auto">
       {/* Sidebar — Tabs */}
       <div className="w-72 flex-shrink-0 flex flex-col gap-3">
         {/* Tab Toggle */}
