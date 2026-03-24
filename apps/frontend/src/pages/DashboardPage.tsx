@@ -26,27 +26,50 @@ export default function DashboardPage() {
   const [searchParams] = useSearchParams();
   const user = useAuthStore(s => s.user);
   const updateUser = useAuthStore(s => s.updateUser);
+  const [isConnecting, setIsConnecting] = useState(false);
   const isPuterConnected = !!user?.puter_token;
 
   // Hubungkan ke Puter API (Duplikat logic dari ChatPage agar mandiri)
   async function connectPuter() {
+    if (isConnecting) return;
+    setIsConnecting(true);
     try {
       // @ts-ignore
-      if (!window.puter) { 
+      const puter = window.puter;
+      if (!puter) { 
         alert('Puter.js belum dimuat. Mohon tunggu sebentar atau muat ulang halaman.'); 
+        setIsConnecting(false);
         return; 
       }
-      // @ts-ignore
-      await window.puter.auth.signIn();
-      // @ts-ignore
-      const token = window.puter.auth.getToken();
+
+      // Check if already signed in to avoid popup
+      const alreadySignedIn = await puter.auth.isSignedIn();
+      if (!alreadySignedIn) {
+          try {
+              await puter.auth.signIn();
+          } catch (signInErr: any) {
+              // Jika user sengaja menutup window, jangan anggap error fatal
+              if (signInErr?.error === 'auth_window_closed') {
+                  console.warn('Puter Auth: User closed the window.');
+                  setIsConnecting(false);
+                  return;
+              }
+              throw signInErr;
+          }
+      }
+
+      const token = puter.auth.getToken();
       if (token) {
         await api.patch('/auth/puter-token', { token });
         updateUser({ puter_token: token as string });
+      } else {
+          throw new Error('Gagal mendapatkan token dari Puter');
       }
     } catch (err) {
       console.error('Failed to connect Puter:', err);
-      alert('Gagal menghubungkan ke Puter AI');
+      alert('Gagal menghubungkan ke Puter AI. Pastikan pop-up diizinkan dan Anda sudah login ke Puter.com');
+    } finally {
+        setIsConnecting(false);
     }
   }
 
@@ -133,9 +156,17 @@ export default function DashboardPage() {
               
               <button 
                 onClick={connectPuter}
-                className="btn-primary w-full justify-center py-4 text-lg shadow-lg hover:scale-105 active:scale-95 transition-all mb-4"
+                disabled={isConnecting}
+                className="btn-primary w-full justify-center py-4 text-lg shadow-lg hover:scale-105 active:scale-95 transition-all mb-4 disabled:opacity-50"
               >
-                🚀 Hubungkan Sekarang
+                {isConnecting ? (
+                    <motion.span 
+                        animate={{ opacity: [1, 0.5, 1] }} 
+                        transition={{ duration: 1, repeat: Infinity }}
+                    >
+                        ⌛ Menghubungkan...
+                    </motion.span>
+                ) : '🚀 Hubungkan Sekarang'}
               </button>
 
               <div className="flex flex-col gap-2">
@@ -170,10 +201,8 @@ export default function DashboardPage() {
           <h2 className="font-bold text-green-900 mb-4">⚡ Aksi Cepat</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: '🏪', label: 'Buka Toko', to: '/app/toko' },
               { icon: '🛒', label: 'Pasar', to: '/app/marketplace' },
               { icon: '📈', label: 'Harga Pangan', to: '/app/harga' },
-              { icon: '🤖', label: 'AI Chat', to: '/app/chat' },
             ].map(a => (
               <a key={a.label} href={a.to} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors cursor-pointer text-center group">
                 <span className="text-2xl group-hover:scale-110 transition-transform">{a.icon}</span>
@@ -181,6 +210,26 @@ export default function DashboardPage() {
               </a>
             ))}
           </div>
+
+          {/* 2.5x Taller AI Chat Preview Card */}
+          <a href="/app/chat" className="mt-4 block group">
+            <div className="card bg-gradient-to-br from-green-600 to-green-500 p-6 min-h-[200px] flex flex-col justify-between hover:shadow-xl transition-all border-none overflow-hidden relative">
+              <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              <div>
+                <div className="flex items-center gap-2 text-white/90 mb-2">
+                  <span className="text-2xl">🤖</span>
+                  <span className="font-bold text-lg">Asisten AI Tani</span>
+                </div>
+                <p className="text-white/80 text-sm leading-relaxed">
+                  Konsultasikan masalah hama, harga komoditas, atau teknik tanam langsung di sini. AI AgriHub siap membantu 24/7.
+                </p>
+              </div>
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-[10px] bg-white/20 text-white px-2 py-1 rounded-lg backdrop-blur-sm">RAG & Knowledge Base Aktif</span>
+                <span className="text-white font-bold text-sm bg-white/10 px-3 py-1 rounded-full group-hover:bg-white/30 transition-colors">Tanya AI Sekarang →</span>
+              </div>
+            </div>
+          </a>
         </div>
 
         <div className="card">

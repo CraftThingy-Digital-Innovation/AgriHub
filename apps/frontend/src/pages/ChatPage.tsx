@@ -114,6 +114,7 @@ export default function ChatPage() {
   
   const user = useAuthStore(s => s.user);
   const updateUser = useAuthStore(s => s.updateUser);
+  const [isConnecting, setIsConnecting] = useState(false);
   const isPuterConnected = !!user?.puter_token;
 
   // Auto-scroll
@@ -149,20 +150,40 @@ export default function ChatPage() {
 
   // Hubungkan ke Puter API
   async function connectPuter() {
+    if (isConnecting) return;
+    setIsConnecting(true);
     try {
       // @ts-ignore
-      if (!window.puter) { alert('Puter.js belum dimuat. Coba refresh halaman.'); return; }
-      // @ts-ignore
-      await window.puter.auth.signIn();
-      // @ts-ignore
-      const token = window.puter.auth.getToken();
+      const puter = window.puter;
+      if (!puter) { alert('Puter.js belum dimuat. Coba refresh halaman.'); setIsConnecting(false); return; }
+
+      // Check if already signed in to avoid popup
+      const alreadySignedIn = await puter.auth.isSignedIn();
+      if (!alreadySignedIn) {
+          try {
+              await puter.auth.signIn();
+          } catch (signInErr: any) {
+              if (signInErr?.error === 'auth_window_closed') {
+                  console.warn('Puter Auth: User closed the window.');
+                  setIsConnecting(false);
+                  return;
+              }
+              throw signInErr;
+          }
+      }
+
+      const token = puter.auth.getToken();
       if (token) {
         await api.patch('/auth/puter-token', { token });
         updateUser({ puter_token: token as string });
+      } else {
+        throw new Error('Gagal mendapatkan token dari Puter');
       }
     } catch (err) {
       console.error('Failed to connect Puter:', err);
-      alert('Gagal menghubungkan ke Puter AI');
+      alert('Gagal menghubungkan ke Puter AI. Pastikan pop-up diizinkan.');
+    } finally {
+      setIsConnecting(false);
     }
   }
 
@@ -295,7 +316,13 @@ export default function ChatPage() {
                 ) : (
                   <>
                     <p className="text-xs text-green-600 mb-3">⚠️ Anda belum menghubungkan akun Puter. AI tidak akan merespon pertanyaan Anda.</p>
-                    <button onClick={connectPuter} className="btn-primary py-1.5 px-3 text-xs w-full justify-center">🔗 Hubungkan Puter sekarang</button>
+                    <button 
+                        onClick={connectPuter} 
+                        disabled={isConnecting}
+                        className="btn-primary py-1.5 px-3 text-xs w-full justify-center disabled:opacity-50"
+                    >
+                        {isConnecting ? '⏳ Menghubungkan...' : '🔗 Hubungkan Puter sekarang'}
+                    </button>
                   </>
                 )}
               </div>
@@ -407,7 +434,7 @@ export default function ChatPage() {
           <div className="flex gap-2">
             <textarea
               className="input-field flex-1 resize-none text-sm"
-              rows={2}
+              rows={5}
               placeholder="Tanya sesuatu tentang pertanian, harga, atau cara pakai AgriHub..."
               value={input}
               onChange={e => setInput(e.target.value)}
