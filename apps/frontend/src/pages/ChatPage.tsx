@@ -176,7 +176,8 @@ export default function ChatPage() {
       );
 
       if (!popup) {
-        alert('Popup diblokir browser. Harap izinkan popup untuk situs ini lalu coba lagi.');
+        // Hapus alert, cukup kembalikan state agar tombol bisa diklik lagi
+        console.warn('Popup blocked by browser.');
         setIsConnecting(false);
         return;
       }

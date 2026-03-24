@@ -63,7 +63,8 @@ export default function DashboardPage() {
       );
 
       if (!popup) {
-        alert('Popup diblokir browser. Harap izinkan popup untuk situs ini lalu coba lagi.');
+        // Hapus alert, cukup kembalikan state agar tombol bisa diklik lagi
+        console.warn('Popup blocked by browser.');
         setIsConnecting(false);
         return;
       }
@@ -134,11 +135,8 @@ export default function DashboardPage() {
     }
   }
 
-  // Trigger otomatis jika dari WhatsApp
-  if (searchParams.get('action') === 'connect-puter' && !isPuterConnected) {
-    // Jalankan setelah render pertama selesai
-     setTimeout(() => connectPuter(), 500);
-  }
+  // Kita hapus auto-trigger karena sering diblokir browser dan menyebabkan alert yang tidak sopan.
+  // Sebagai gantinya, tombol di UI akan berkedip jika ada action=connect-puter.
 
   // Tautkan WhatsApp LID otomatis
   const waLidToLink = searchParams.get('lid');
@@ -215,9 +213,11 @@ export default function DashboardPage() {
                 Untuk keamanan data Anda, silakan hubungkan AgriHub ke layanan **Puter.js** sebelum mengakses Dashboard.
               </p>
               
-              <button 
+            <motion.button 
                 onClick={connectPuter}
                 disabled={isConnecting}
+                animate={searchParams.get('action') === 'connect-puter' ? { scale: [1, 1.03, 1], boxShadow: ['0px 0px 0px rgba(34,197,94,0)', '0px 0px 20px rgba(34,197,94,0.4)', '0px 0px 0px rgba(34,197,94,0)'] } : {}}
+                transition={{ duration: 2, repeat: Infinity }}
                 className="btn-primary w-full justify-center py-4 text-lg shadow-lg hover:scale-105 active:scale-95 transition-all mb-4 disabled:opacity-50"
               >
                 {isConnecting ? (
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                         ⌛ Menghubungkan...
                     </motion.span>
                 ) : '🚀 Hubungkan Sekarang'}
-              </button>
+              </motion.button>
 
               <div className="flex flex-col gap-2">
                 <button 
