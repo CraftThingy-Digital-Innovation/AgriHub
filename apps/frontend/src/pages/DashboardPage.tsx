@@ -76,31 +76,38 @@ export default function DashboardPage() {
 
       await new Promise<void>((resolve, reject) => {
         const interval = setInterval(async () => {
-          // User menutup popup
+          // User menutup popup manual
           if (popup.closed) {
             clearInterval(interval);
-            // Cek apakah sudah sempat login sebelum menutup
             const signedIn = await puter.auth.isSignedIn().catch(() => false);
-            if (signedIn) resolve();
+            const t = puter.auth.getToken();
+            if (signedIn || t) resolve();
             else reject(new Error('Popup ditutup sebelum login selesai.'));
             return;
           }
-          // Timeout
+
+          // Timeout 3 menit
           if (Date.now() > deadline) {
             clearInterval(interval);
             popup.close();
             reject(new Error('Timeout: login Puter melebihi 3 menit.'));
             return;
           }
-          // Cek apakah sudah login
+
+          // Polling status login
           try {
             const signedIn = await puter.auth.isSignedIn();
-            if (signedIn) {
+            const t = puter.auth.getToken();
+            console.log('Puter Auth Polling:', { signedIn, hasToken: !!t });
+
+            if (signedIn || t) {
               clearInterval(interval);
               popup.close();
               resolve();
             }
-          } catch { /* abaikan error sementara */ }
+          } catch (e) {
+             console.debug('Polling error (expected while popup is active):', e);
+          }
         }, POLL_INTERVAL_MS);
       });
 
