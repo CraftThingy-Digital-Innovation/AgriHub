@@ -157,16 +157,9 @@ export default function ChatPage() {
       const puter = window.puter;
       if (!puter) { alert('Puter.js belum dimuat. Coba refresh halaman.'); setIsConnecting(false); return; }
 
-      // Jika sudah login, langsung ambil token
-      const alreadySignedIn = await puter.auth.isSignedIn();
-      if (alreadySignedIn) {
-        const token = puter.auth.getToken();
-        if (token) {
-          await api.patch('/auth/puter-token', { token });
-          updateUser({ puter_token: token as string });
-          return;
-        }
-      }
+      // Langsung panggil signIn() karena di SDK v2 ini adalah cara paling reliabel untuk mendapatkan token.
+      // Jika sudah login, fungsi ini akan resolve seketika.
+
 
       // Panggil cara resmi: signIn()
       const signInResult = await puter.auth.signIn();
