@@ -148,7 +148,7 @@ export default function ChatPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['rag-docs'] }),
   });
 
-  // Hubungkan ke Puter API
+  // Hubungkan ke Puter API — manual popup + polling (menghindari bug null window di SDK)
   async function connectPuter() {
     if (isConnecting) return;
     setIsConnecting(true);
@@ -157,31 +157,76 @@ export default function ChatPage() {
       const puter = window.puter;
       if (!puter) { alert('Puter.js belum dimuat. Coba refresh halaman.'); setIsConnecting(false); return; }
 
-      // Check if already signed in to avoid popup
+      // Jika sudah login, langsung ambil token
       const alreadySignedIn = await puter.auth.isSignedIn();
-      if (!alreadySignedIn) {
-          try {
-              await puter.auth.signIn();
-          } catch (signInErr: any) {
-              if (signInErr?.error === 'auth_window_closed') {
-                  console.warn('Puter Auth: User closed the window.');
-                  setIsConnecting(false);
-                  return;
-              }
-              throw signInErr;
-          }
+      if (alreadySignedIn) {
+        const token = puter.auth.getToken();
+        if (token) {
+          await api.patch('/auth/puter-token', { token });
+          updateUser({ puter_token: token as string });
+          return;
+        }
       }
+
+      // Buka popup Puter.com secara manual (hindari bug SDK internal)
+      const popup = window.open(
+        'https://puter.com',
+        'puter-login',
+        'width=600,height=700,left=200,top=100'
+      );
+
+      if (!popup) {
+        alert('Popup diblokir browser. Harap izinkan popup untuk situs ini lalu coba lagi.');
+        setIsConnecting(false);
+        return;
+      }
+
+      // Poll setiap 1.5 detik hingga 3 menit
+      const MAX_WAIT_MS = 3 * 60 * 1000;
+      const POLL_INTERVAL_MS = 1500;
+      const deadline = Date.now() + MAX_WAIT_MS;
+
+      await new Promise<void>((resolve, reject) => {
+        const interval = setInterval(async () => {
+          // User menutup popup
+          if (popup.closed) {
+            clearInterval(interval);
+            const signedIn = await puter.auth.isSignedIn().catch(() => false);
+            if (signedIn) resolve();
+            else reject(new Error('Popup ditutup sebelum login selesai.'));
+            return;
+          }
+          // Timeout
+          if (Date.now() > deadline) {
+            clearInterval(interval);
+            popup.close();
+            reject(new Error('Timeout: login Puter melebihi 3 menit.'));
+            return;
+          }
+          // Cek apakah sudah login
+          try {
+            const signedIn = await puter.auth.isSignedIn();
+            if (signedIn) {
+              clearInterval(interval);
+              popup.close();
+              resolve();
+            }
+          } catch { /* abaikan error sementara */ }
+        }, POLL_INTERVAL_MS);
+      });
 
       const token = puter.auth.getToken();
       if (token) {
         await api.patch('/auth/puter-token', { token });
         updateUser({ puter_token: token as string });
       } else {
-        throw new Error('Gagal mendapatkan token dari Puter');
+        throw new Error('Gagal mendapatkan token dari Puter setelah login.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to connect Puter:', err);
-      alert('Gagal menghubungkan ke Puter AI. Pastikan pop-up diizinkan.');
+      if (err?.message !== 'Popup ditutup sebelum login selesai.') {
+        alert(`Gagal menghubungkan ke Puter AI: ${err?.message ?? 'Error tidak diketahui'}`);
+      }
     } finally {
       setIsConnecting(false);
     }
