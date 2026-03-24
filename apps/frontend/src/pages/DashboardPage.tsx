@@ -55,61 +55,10 @@ export default function DashboardPage() {
         }
       }
 
-      // Buka popup Puter.com secara manual (hindari bug SDK internal)
-      const popup = window.open(
-        'https://puter.com',
-        'puter-login',
-        'width=600,height=700,left=200,top=100'
-      );
-
-      if (!popup) {
-        // Hapus alert, cukup kembalikan state agar tombol bisa diklik lagi
-        console.warn('Popup blocked by browser.');
-        setIsConnecting(false);
-        return;
-      }
-
-      // Poll setiap 1.5 detik hingga 3 menit
-      const MAX_WAIT_MS = 3 * 60 * 1000;
-      const POLL_INTERVAL_MS = 1500;
-      const deadline = Date.now() + MAX_WAIT_MS;
-
-      await new Promise<void>((resolve, reject) => {
-        const interval = setInterval(async () => {
-          // User menutup popup manual
-          if (popup.closed) {
-            clearInterval(interval);
-            const signedIn = await puter.auth.isSignedIn().catch(() => false);
-            const t = puter.auth.getToken();
-            if (signedIn || t) resolve();
-            else reject(new Error('Popup ditutup sebelum login selesai.'));
-            return;
-          }
-
-          // Timeout 3 menit
-          if (Date.now() > deadline) {
-            clearInterval(interval);
-            popup.close();
-            reject(new Error('Timeout: login Puter melebihi 3 menit.'));
-            return;
-          }
-
-          // Polling status login
-          try {
-            const signedIn = await puter.auth.isSignedIn();
-            const t = puter.auth.getToken();
-            console.log('Puter Auth Polling:', { signedIn, hasToken: !!t });
-
-            if (signedIn || t) {
-              clearInterval(interval);
-              popup.close();
-              resolve();
-            }
-          } catch (e) {
-             console.debug('Polling error (expected while popup is active):', e);
-          }
-        }, POLL_INTERVAL_MS);
-      });
+      // Panggil cara resmi: signIn()
+      // Karena dipicu oleh klik manual, popup tidak akan diblokir browser.
+      const signInResult = await puter.auth.signIn();
+      console.log('Puter Auth Success:', signInResult);
 
       const token = puter.auth.getToken();
       if (token) {
