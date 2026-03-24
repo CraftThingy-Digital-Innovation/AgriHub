@@ -27,6 +27,8 @@ export default function DashboardPage() {
   const user = useAuthStore(s => s.user);
   const updateUser = useAuthStore(s => s.updateUser);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const [manualToken, setManualToken] = useState('');
   const isPuterConnected = !!user?.puter_token;
 
   // Hubungkan ke Puter API (Duplikat logic dari ChatPage agar mandiri)
@@ -68,6 +70,20 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Failed to connect Puter:', err);
       alert('Gagal menghubungkan ke Puter AI. Pastikan pop-up diizinkan dan Anda sudah login ke Puter.com');
+    } finally {
+        setIsConnecting(false);
+    }
+  }
+
+  async function handleManualSubmit() {
+    if (!manualToken.trim()) return;
+    setIsConnecting(true);
+    try {
+        await api.patch('/auth/puter-token', { token: manualToken });
+        updateUser({ puter_token: manualToken });
+        setShowManual(false);
+    } catch (err) {
+        alert('Gagal menyimpan token manual');
     } finally {
         setIsConnecting(false);
     }
@@ -170,9 +186,41 @@ export default function DashboardPage() {
               </button>
 
               <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => setShowManual(!showManual)}
+                  className="text-xs text-green-400 hover:text-green-600 underline"
+                >
+                  {showManual ? 'Batal' : 'Gagal terhubung? Klik di sini untuk cara manual'}
+                </button>
+
+                {showManual && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="bg-green-50 p-4 rounded-xl mt-2 border border-green-100"
+                  >
+                    <p className="text-[10px] text-green-600 mb-2 text-left">
+                      Buka **puter.com**, login, buka Konsol (F12), dan ketik `puter.auth.getToken()` untuk mendapatkan token Anda.
+                    </p>
+                    <input 
+                      className="input-field text-xs mb-2" 
+                      placeholder="Masukkan Token Puter"
+                      value={manualToken}
+                      onChange={e => setManualToken(e.target.value)}
+                    />
+                    <button 
+                      onClick={handleManualSubmit}
+                      className="btn-secondary w-full py-2 text-xs justify-center"
+                      disabled={isConnecting || !manualToken}
+                    >
+                      Simpan Token Manual
+                    </button>
+                  </motion.div>
+                )}
+
                 <a 
                   href="https://wa.me/6285188000139" 
-                  className="text-xs text-green-600 hover:text-green-800 font-medium"
+                  className="text-xs text-green-600 hover:text-green-800 font-medium mt-4"
                 >
                   ← Ke WhatsApp
                 </a>
