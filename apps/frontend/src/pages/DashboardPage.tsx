@@ -29,7 +29,7 @@ export default function DashboardPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [manualToken, setManualToken] = useState('');
-  const isPuterConnected = !!user?.puter_token;
+  const isPuterConnected = !!user?.puter_token || user?.role === 'admin';
 
   // Hubungkan ke Puter API — manual popup + polling (menghindari bug null window di SDK)
   async function connectPuter() {
