@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+# Kita perlu meng-track dist dan public di apps/backend untuk deployment Hostinger
+# dist/  <-- Comment this to allow tracking
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# WhatsApp session (Baileys)
+wa-auth/
+.baileys/
+baileys_auth_info/
+
+# Uploads
+apps/backend/uploads/
+apps/backend/rag_docs/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
