@@ -16,6 +16,7 @@ import {
   ClipboardEdit
 } from "lucide-react";
 import api from '../lib/api';
+import NationalPriceMap from '../components/NationalPriceMap';
 
 interface PriceRecord {
   recorded_date: string;
@@ -63,6 +64,11 @@ export default function PriceMonitorPage() {
     queryKey: ['price-predict', selectedKomoditas],
     queryFn: () => api.get(`/price/predict/${selectedKomoditas}`).then(r => r.data),
     enabled: !!selectedKomoditas && showPredict,
+  });
+
+  const { data: mapDataRaw } = useQuery({
+    queryKey: ['pihps-map-data', selectedKomoditas],
+    queryFn: () => api.get(`/pihps/map-data${selectedKomoditas ? `?commodity=${selectedKomoditas}` : ''}`).then(r => r.data),
   });
 
   const reportMutation = useMutation({
@@ -121,6 +127,11 @@ export default function PriceMonitorPage() {
         </select>
 
       </div>
+
+      {/* 🔥 NATIONAL PRICE MAP */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
+        <NationalPriceMap data={mapDataRaw?.data || []} onProvinceClick={(prov) => console.log('Clicked:', prov)} />
+      </motion.div>
 
       {/* 🔥 CHART */}
       {selectedKomoditas && (
