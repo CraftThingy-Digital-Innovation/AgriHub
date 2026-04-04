@@ -25,8 +25,8 @@
 | Backend | Express.js (Node.js) |
 | Frontend | Vite + React (SPA) |
 | Database | SQLite (dev) / PostgreSQL (prod) via Knex.js |
-| AI | Puter.js SDK + RAG Engine |
-| WhatsApp | Baileys.js |
+| AI | Puter.js SDK (arcee-ai/trinity-large-preview:free) + RAG Engine |
+| WhatsApp | Baileys.js (dengan Async Streaming / Live-Typing Editor) |
 | Pembayaran | Midtrans (Snap + Webhook) |
 | Logistik | Biteship API |
 | Styling | Tailwind CSS v4 |
