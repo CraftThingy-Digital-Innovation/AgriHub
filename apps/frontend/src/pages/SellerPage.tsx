@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Store, Plus, Pencil, Trash2 } from 'lucide-react';
 import api from '../lib/api';
 import MapPicker from '../components/MapPicker';
 
@@ -24,12 +25,11 @@ interface Product {
 
 export default function SellerPage() {
   const qc = useQueryClient();
+
   const [showRegister, setShowRegister] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [showStoreEdit, setShowStoreEdit] = useState(false);
 
-  // Store Form State
   const [storeForm, setStoreForm] = useState({
     name: '',
     provinsi: '',
@@ -38,13 +38,12 @@ export default function SellerPage() {
     postal_code: '',
     address: '',
     area_id: '',
-    latitude: 0,
-    longitude: 0,
+    latitude: -6.2,
+    longitude: 106.8,
     product_types: '',
     description: ''
   });
 
-  // Product Form State
   const initialProductForm = {
     name: '',
     category: 'sayuran',
@@ -58,40 +57,33 @@ export default function SellerPage() {
     origin: '',
     images_json: '[]'
   };
+
   const [productForm, setProductForm] = useState(initialProductForm);
 
-  // Queries
-  const { data: storeData, isLoading: storeLoading } = useQuery({
+  // ================= QUERY =================
+  const { data: storeData, isLoading } = useQuery({
     queryKey: ['my-store'],
     queryFn: () => api.get('/stores/me').then(r => r.data),
   });
 
+  const store = storeData?.data;
+
   const { data: productsData } = useQuery({
     queryKey: ['my-products'],
-    queryFn: () => api.get('/products?store_id=' + storeData?.data?.id).then(r => r.data),
-    enabled: !!storeData?.data?.id,
+    queryFn: () => api.get(`/products?store_id=${store?.id}`).then(r => r.data),
+    enabled: !!store?.id,
   });
 
-  // Mutations
+  // ================= MUTATION =================
   const registerMutation = useMutation({
-    mutationFn: (data: typeof storeForm) => api.post('/stores', {
-      ...data,
-      product_types: data.product_types.split(',').map(s => s.trim()),
-    }),
-    onSuccess: () => { 
-      qc.invalidateQueries({ queryKey: ['my-store'] }); 
-      setShowRegister(false); 
-    },
-  });
-
-  const updateStoreMutation = useMutation({
-    mutationFn: (data: typeof storeForm) => api.patch(`/stores/${storeData?.data?.id}`, {
-      ...data,
-      product_types: typeof data.product_types === 'string' ? data.product_types.split(',').map(s => s.trim()) : data.product_types,
-    }),
+    mutationFn: (data: typeof storeForm) =>
+      api.post('/stores', {
+        ...data,
+        product_types: data.product_types.split(',').map(s => s.trim()),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-store'] });
-      setShowStoreEdit(false);
+      setShowRegister(false);
     }
   });
 
@@ -100,7 +92,7 @@ export default function SellerPage() {
       if (editingProduct) {
         return api.patch(`/products/${editingProduct.id}`, data);
       }
-      return api.post('/products', { ...data, store_id: storeData?.data?.id });
+      return api.post('/products', { ...data, store_id: store?.id });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-products'] });
@@ -112,406 +104,152 @@ export default function SellerPage() {
 
   const deleteProductMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/products/${id}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['my-products'] });
-    }
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-products'] })
   });
 
-  const store = storeData?.data;
-
-  // Handlers
-  const handleEditProduct = (p: Product) => {
-    setEditingProduct(p);
-    setProductForm({
-      name: p.name,
-      category: p.category,
-      unit: p.unit,
-      price_per_unit: p.price_per_unit,
-      stock_quantity: p.stock_quantity,
-      min_order: p.min_order,
-      description: p.description || '',
-      weight_gram: p.weight_gram || 1000,
-      sku: p.sku || '',
-      origin: p.origin || '',
-      images_json: p.images_json || '[]'
-    });
-    setShowProductModal(true);
-  };
-
-  const handleOpenRegister = () => {
-    setStoreForm({
-      name: '', provinsi: '', kabupaten: '', kecamatan: '', 
-      postal_code: '', address: '', area_id: '',
-      latitude: -6.2, longitude: 106.8,
-      product_types: '', description: ''
-    });
-    setShowRegister(true);
-  };
-
-  const handleOpenStoreEdit = () => {
-    setStoreForm({
-      name: store.name,
-      provinsi: store.provinsi,
-      kabupaten: store.kabupaten,
-      kecamatan: store.kecamatan || '',
-      postal_code: store.postal_code || '',
-      address: store.address || '',
-      area_id: store.area_id || '',
-      latitude: Number(store.latitude) || -6.2,
-      longitude: Number(store.longitude) || 106.8,
-      product_types: Array.isArray(store.product_types) ? store.product_types.join(', ') : store.product_types,
-      description: store.description || ''
-    });
-    setShowStoreEdit(true);
-  };
-
-  const handleLocationSelect = (data: any) => {
-    setStoreForm(f => ({
-      ...f,
-      latitude: data.lat,
-      longitude: data.lng,
-      address: data.address,
-      postal_code: data.postalCode,
-      provinsi: data.province,
-      kabupaten: data.city,
-      kecamatan: data.kecamatan,
-      area_id: data.areaId
-    }));
-  };
-
-  if (storeLoading) return <div className="p-10 text-center animate-pulse text-green-600 font-medium">Memuat data toko...</div>;
-
-  if (!store) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-green-900 mb-2">🏪 Toko Saya</h1>
-        <div className="card text-center py-12 px-6">
-          <div className="text-5xl mb-4">🌾</div>
-          <h2 className="font-bold text-green-900 mb-2">Belum punya toko?</h2>
-          <p className="text-sm text-green-600 mb-8">Daftarkan toko Anda dan mulai jual produk pertanian langsung ke konsumen.</p>
-          {!showRegister ? (
-            <button className="btn-primary" onClick={handleOpenRegister}>+ Daftar Toko Sekarang</button>
-          ) : (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-left space-y-6 max-w-2xl mx-auto">
-              {/* Map Section */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-green-800 uppercase tracking-wider">Langkah 1: Pilih Lokasi di Peta</label>
-                <MapPicker onLocationSelect={handleLocationSelect} />
-              </div>
-
-              {/* Form Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-green-50/50 p-6 rounded-2xl border border-green-100">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Langkah 2: Lengkapi Data</label>
-                  <label className="text-[10px] text-green-600 mb-2 block italic">* Alamat otomatis terisi saat kamu klik di peta</label>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Nama Toko</label>
-                  <input className="input-field" placeholder="Contoh: Tani Makmur Jaya" value={storeForm.name} onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Alamat Lengkap (Pin Map)</label>
-                  <textarea className="input-field h-20 text-sm" placeholder="Jl. Raya Pertanian No. 1..." value={storeForm.address} onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))} />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Provinsi</label>
-                  <input className="input-field" value={storeForm.provinsi} onChange={e => setStoreForm(f => ({ ...f, provinsi: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kabupaten</label>
-                  <input className="input-field" value={storeForm.kabupaten} onChange={e => setStoreForm(f => ({ ...f, kabupaten: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kecamatan</label>
-                  <input className="input-field" value={storeForm.kecamatan} onChange={e => setStoreForm(f => ({ ...f, kecamatan: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kode Pos</label>
-                  <input className="input-field" value={storeForm.postal_code} onChange={e => setStoreForm(f => ({ ...f, postal_code: e.target.value }))} />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Biteship Area ID</label>
-                  <input className="input-field bg-gray-50 font-mono text-xs" readOnly value={storeForm.area_id} placeholder="Terisi otomatis..." />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Jenis Produk Yang Dijual</label>
-                  <input className="input-field" placeholder="Contoh: Cabai, Sayuran, Beras" value={storeForm.product_types} onChange={e => setStoreForm(f => ({ ...f, product_types: e.target.value }))} />
-                </div>
-
-                <div className="md:col-span-2 flex gap-3 mt-4">
-                  <button className="btn-secondary flex-1 justify-center" onClick={() => setShowRegister(false)}>Batal</button>
-                  <button className="btn-primary flex-1 justify-center" onClick={() => registerMutation.mutate(storeForm)} disabled={registerMutation.isPending}>
-                    {registerMutation.isPending ? '⏳ Mendaftar...' : '✅ Daftar Toko'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <div className="p-10 text-center text-green-600">Memuat...</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header & Stats */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-green-900">🏪 {store.name}</h1>
-            <button onClick={handleOpenStoreEdit} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors font-bold">Edit Profil & Map</button>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <span className="badge badge-green font-mono">{store.store_code}</span>
-            <span className="badge badge-green">{store.kabupaten}, {store.provinsi}</span>
-            <span className="badge badge-amber">⭐ {Number(store.rating).toFixed(1)}</span>
-            {store.postal_code && <span className="badge badge-purple">📮 {store.postal_code}</span>}
-          </div>
-        </div>
-        <button className="btn-primary" onClick={() => { setEditingProduct(null); setProductForm(initialProductForm); setShowProductModal(true); }}>
-          + Tambah Produk Baru
-        </button>
+
+      {/* ================= HEADER (SELALU ADA) ================= */}
+      <div className="flex items-center gap-3">
+        <Store className="text-green-600" />
+        <h1 className="text-2xl font-bold text-green-900">Toko Saya</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { icon: '📦', label: 'Produk Aktif', value: (productsData?.data ?? []).filter((p: any) => p.is_active).length },
-          { icon: '🛒', label: 'Pesanan Masuk', value: store.total_orders },
-          { icon: '💰', label: 'Total Penjualan', value: 'Coming Soon' }, 
-        ].map(s => (
-          <div key={s.label} className="stat-card">
-            <div className="text-2xl mb-1">{s.icon}</div>
-            <div className="stat-value text-xl">{s.value}</div>
-            <div className="stat-label uppercase tracking-wider text-[10px]">{s.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* ================= BELUM ADA TOKO ================= */}
+      {!store ? (
+        <div className="card text-center py-16">
 
-      {/* Products Table */}
-      <div className="card overflow-hidden p-0">
-        <div className="px-5 py-4 border-b border-green-50 bg-green-50/30 flex justify-between items-center">
-          <h2 className="font-bold text-green-900">📋 Daftar Produk Anda</h2>
-          <span className="text-[10px] font-bold text-green-600 bg-white px-2 py-1 rounded-full border border-green-100">
-            {productsData?.data?.length || 0} TOTAL
-          </span>
+          <div className="w-20 h-20 mx-auto mb-4 bg-green-50 rounded-2xl flex items-center justify-center">
+            <Store className="text-green-500" size={28} />
+          </div>
+
+          <h2 className="text-lg font-bold text-green-900 mb-2">
+            Belum punya toko?
+          </h2>
+
+          <p className="text-sm text-green-600 mb-6">
+            Daftarkan toko Anda dan mulai jual produk pertanian langsung ke konsumen.
+          </p>
+
+          <button
+            onClick={() => setShowRegister(true)}
+            className="btn-primary px-6 py-3"
+          >
+            + Daftar Toko Sekarang
+          </button>
+
+          {/* FORM REGISTER */}
+          <AnimatePresence>
+            {showRegister && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-6 max-w-xl mx-auto space-y-3"
+              >
+                <input className="input-field" placeholder="Nama toko"
+                  onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
+
+                <MapPicker onLocationSelect={(loc: any) =>
+                  setStoreForm(f => ({
+                    ...f,
+                    latitude: loc.lat,
+                    longitude: loc.lng,
+                    address: loc.address
+                  }))
+                } />
+
+                <button
+                  onClick={() => registerMutation.mutate(storeForm)}
+                  className="btn-primary w-full"
+                >
+                  Simpan
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="bg-white text-green-800 border-b border-green-50 text-[11px] uppercase tracking-widest">
-                <th className="px-5 py-3 font-bold">Produk</th>
-                <th className="px-5 py-3 font-bold">Stok & Unit</th>
-                <th className="px-5 py-3 font-bold">Harga</th>
-                <th className="px-5 py-3 font-bold">Status</th>
-                <th className="px-5 py-3 font-bold text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-green-50">
-              {(productsData?.data ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-20 text-center text-green-500">
-                    <div className="text-4xl mb-3">🌱</div>
-                    <p className="font-medium">Belum ada produk di etalase Anda.</p>
-                    <button className="mt-3 text-xs text-green-700 underline" onClick={() => setShowProductModal(true)}>Mulai tambah produk pertama</button>
-                  </td>
-                </tr>
-              ) : (
-                productsData.data.map((p: Product) => (
-                  <tr key={p.id} className="hover:bg-green-50/30 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-lg overflow-hidden border border-green-200">
-                          {p.image_url ? <img src={p.image_url} className="w-full h-full object-cover" /> : '🥦'}
-                        </div>
-                        <div>
-                          <div className="font-bold text-green-900">{p.name}</div>
-                          <div className="text-[10px] text-green-600 uppercase font-bold tracking-tight">{p.category} | SKU: {p.sku || '-'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="font-medium text-green-800">{p.stock_quantity} <span className="text-[10px] border border-green-200 rounded px-1">{p.unit}</span></div>
-                      <div className="text-[10px] text-green-500">Min: {p.min_order} | {p.weight_gram}g</div>
-                    </td>
-                    <td className="px-5 py-4 font-bold text-green-700">
-                      Rp{Number(p.price_per_unit).toLocaleString('id-ID')}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`badge ${p.is_active ? 'badge-green' : 'badge-red'} text-[9px]`}>
-                        {p.is_active ? 'AKTIF' : 'NONAKTIF'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <div className="flex justify-end gap-2 text-xs">
-                        <button onClick={() => handleEditProduct(p)} className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">✎</button>
-                        <button onClick={() => { if(confirm('Nonaktifkan produk ini?')) deleteProductMutation.mutate(p.id) }} className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">✕</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      ) : (
 
-      {/* Product Modal */}
-      <AnimatePresence>
-        {showProductModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowProductModal(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative z-10">
-              <div className="px-6 py-4 border-b border-green-100 bg-green-50/50 flex justify-between items-center text-green-900">
-                <h3 className="font-bold">{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
-                <button onClick={() => setShowProductModal(false)} className="text-xl">✕</button>
-              </div>
-              <div className="p-6 overflow-y-auto max-h-[80vh] grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Nama Produk</label>
-                  <input className="input-field" placeholder="Contoh: Cabai Keriting Organik" value={productForm.name} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Kategori</label>
-                  <select className="input-field" value={productForm.category} onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))}>
-                    <option value="sayuran">Sayuran</option>
-                    <option value="buah">Buah-buahan</option>
-                    <option value="biji-bijian">Biji-bijian / Beras</option>
-                    <option value="umbian">Umbi-umbian</option>
-                    <option value="olahan">Produk Olahan</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Unit</label>
-                  <input className="input-field" placeholder="kg, ikat, sak, dll" value={productForm.unit} onChange={e => setProductForm(f => ({ ...f, unit: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Harga Jual per Unit</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-xs text-green-600 font-bold">Rp</span>
-                    <input type="number" className="input-field pl-9" value={productForm.price_per_unit} onChange={e => setProductForm(f => ({ ...f, price_per_unit: Number(e.target.value) }))} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Stok Tersedia</label>
-                  <input type="number" className="input-field" value={productForm.stock_quantity} onChange={e => setProductForm(f => ({ ...f, stock_quantity: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Minimal Order</label>
-                  <input type="number" className="input-field" value={productForm.min_order} onChange={e => setProductForm(f => ({ ...f, min_order: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Berat (gram) <span className="text-[10px] lowercase font-normal italic">untuk ongkir</span></label>
-                  <input type="number" className="input-field" value={productForm.weight_gram} onChange={e => setProductForm(f => ({ ...f, weight_gram: Number(e.target.value) }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">SKU / Kode Produk</label>
-                  <input className="input-field" placeholder="PROD-001" value={productForm.sku} onChange={e => setProductForm(f => ({ ...f, sku: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Asal Daerah / Origin</label>
-                  <input className="input-field" placeholder="Bengkulu Tengah" value={productForm.origin} onChange={e => setProductForm(f => ({ ...f, origin: e.target.value }))} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-green-800 mb-1 block">Deskripsi Produk</label>
-                  <textarea className="input-field h-24" placeholder="Jelaskan kualitas, kesegaran, atau cara pengemasan produk Anda..." value={productForm.description} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} />
-                </div>
-                <div className="md:col-span-2 border-t border-green-50 pt-4 flex gap-3">
-                  <button className="btn-secondary flex-1 justify-center" onClick={() => setShowProductModal(false)}>Batal</button>
-                  <button className="btn-primary flex-1 justify-center" onClick={() => productMutation.mutate(productForm)} disabled={productMutation.isPending}>
-                    {productMutation.isPending ? '⏳ Memproses...' : (editingProduct ? '💾 Simpan Perubahan' : '🚀 Publish Produk')}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+        /* ================= SUDAH ADA TOKO ================= */
+        <>
+          {/* HEADER TOKO */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-green-900">{store.name}</h2>
+              <p className="text-sm text-green-600">
+                {store.kabupaten}, {store.provinsi}
+              </p>
+            </div>
 
-      {/* Store Edit Modal */}
-      <AnimatePresence>
-        {showStoreEdit && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowStoreEdit(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden relative z-10">
-              <div className="px-6 py-4 border-b border-green-100 bg-green-50/50 flex justify-between items-center text-green-900 font-bold">
-                <h3>Edit Profil & Lokasi Toko</h3>
-                <button onClick={() => setShowStoreEdit(false)}>✕</button>
-              </div>
-              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[85vh]">
-                <div className="space-y-4">
-                  <div className="bg-green-50 p-4 rounded-xl space-y-4 border border-green-100">
-                    <div>
-                      <label className="text-xs font-bold text-green-800 mb-1 block">Nama Toko</label>
-                      <input className="input-field" value={storeForm.name} onChange={e => setStoreForm(f => ({ ...f, name: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-green-800 mb-1 block">Alamat Lengkap (Pin Map)</label>
-                      <textarea className="input-field h-20 text-sm" value={storeForm.address} onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <label className="text-[10px] font-bold text-green-700 block uppercase">Provinsi</label>
-                        <input className="input-field text-xs py-2 bg-white" value={storeForm.provinsi} onChange={e => setStoreForm(f => ({ ...f, provinsi: e.target.value }))} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-green-700 block uppercase">Kabupaten</label>
-                        <input className="input-field text-xs py-2 bg-white" value={storeForm.kabupaten} onChange={e => setStoreForm(f => ({ ...f, kabupaten: e.target.value }))} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-green-700 block uppercase">Kecamatan</label>
-                        <input className="input-field text-xs py-2 bg-white" value={storeForm.kecamatan} onChange={e => setStoreForm(f => ({ ...f, kecamatan: e.target.value }))} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-green-700 block uppercase">Kode Pos</label>
-                        <input className="input-field text-xs py-2 bg-white" value={storeForm.postal_code} onChange={e => setStoreForm(f => ({ ...f, postal_code: e.target.value }))} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                       <div>
-                        <label className="text-[10px] font-bold text-green-700 block uppercase">Area ID (Biteship)</label>
-                        <input className="input-field text-[10px] py-1 font-mono bg-gray-50" readOnly value={storeForm.area_id} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-green-700 block uppercase">Koordinat GPS</label>
-                        <div className="text-[10px] font-mono text-green-600 bg-gray-50 p-1 rounded border border-green-50 truncate">
-                          {storeForm.latitude.toFixed(6)}, {storeForm.longitude.toFixed(6)}
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-green-800 mb-1 block">Deskripsi Toko</label>
-                      <textarea className="input-field h-20 text-sm" value={storeForm.description} onChange={e => setStoreForm(f => ({ ...f, description: e.target.value }))} />
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                   <button className="btn-secondary flex-1 justify-center" onClick={() => setShowStoreEdit(false)}>Batal</button>
-                   <button className="btn-primary flex-1 justify-center font-bold" onClick={() => updateStoreMutation.mutate(storeForm)} disabled={updateStoreMutation.isPending}>
-                    {updateStoreMutation.isPending ? '⏳ Menyimpan...' : '💾 Simpan Perubahan'}
-                   </button>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                   <label className="text-xs font-bold text-green-800 uppercase tracking-widest block">Update Lokasi di Peta</label>
-                   <MapPicker 
-                    initialLat={storeForm.latitude} 
-                    initialLng={storeForm.longitude} 
-                    onLocationSelect={handleLocationSelect} 
-                   />
-                   <p className="text-[10px] text-green-500 italic bg-green-50 p-2 rounded-lg border border-green-100">
-                     Geser marker atau klik peta untuk memperbarui koordinat GPS dan alamat toko secara otomatis.
-                   </p>
-                </div>
-              </div>
-            </motion.div>
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setShowProductModal(true);
+              }}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus size={16} /> Tambah Produk
+            </button>
           </div>
-        )}
-      </AnimatePresence>
+
+          {/* PRODUK LIST */}
+          <div className="card">
+            {(productsData?.data ?? []).length === 0 ? (
+              <div className="py-16 text-center text-green-500">
+                Belum ada produk
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {productsData.data.map((p: Product) => (
+                  <div key={p.id} className="flex justify-between items-center p-4 border rounded-xl">
+
+                    <div>
+                      <div className="font-semibold text-green-900">{p.name}</div>
+                      <div className="text-xs text-green-600">
+                        {p.stock_quantity} {p.unit}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="font-bold text-green-700">
+                        Rp{Number(p.price_per_unit).toLocaleString('id-ID')}
+                      </div>
+
+                      <div className="flex gap-2 mt-2 justify-end">
+                        <button
+                          onClick={() => {
+                            setEditingProduct(p);
+                            setProductForm(p as any);
+                            setShowProductModal(true);
+                          }}
+                          className="p-2 bg-blue-50 text-blue-600 rounded"
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        <button
+                          onClick={() => deleteProductMutation.mutate(p.id)}
+                          className="p-2 bg-red-50 text-red-600 rounded"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

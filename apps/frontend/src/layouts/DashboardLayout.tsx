@@ -2,16 +2,30 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
+import logo from '../assets/agrihub-logo.png';
+
+// ✅ LUCIDE ICONS
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Link2,
+  BarChart3,
+  Package,
+  Store,
+  Wallet,
+  Bot,
+  Settings
+} from "lucide-react";
 
 const navItems = [
-  { to: '/app', icon: '📊', label: 'Dashboard', end: true },
-  { to: '/app/marketplace', icon: '🛒', label: 'Marketplace' },
-  { to: '/app/matching', icon: '🔗', label: 'Matching Stok' },
-  { to: '/app/harga', icon: '📈', label: 'Monitor Harga' },
-  { to: '/app/pesanan', icon: '📦', label: 'Pesanan' },
-  { to: '/app/toko', icon: '🏪', label: 'Toko Saya' },
-  { to: '/app/dompet', icon: '💰', label: 'Dompet' },
-  { to: '/app/chat', icon: '🤖', label: 'AI Chat' },
+  { to: '/app', icon: <LayoutDashboard size={18} />, label: 'Dashboard', end: true },
+  { to: '/app/marketplace', icon: <ShoppingCart size={18} />, label: 'Marketplace' },
+  { to: '/app/matching', icon: <Link2 size={18} />, label: 'Matching Stok' },
+  { to: '/app/harga', icon: <BarChart3 size={18} />, label: 'Monitor Harga' },
+  { to: '/app/pesanan', icon: <Package size={18} />, label: 'Pesanan' },
+  { to: '/app/toko', icon: <Store size={18} />, label: 'Toko Saya' },
+  { to: '/app/dompet', icon: <Wallet size={18} />, label: 'Dompet' },
+  { to: '/app/chat', icon: <Bot size={18} />, label: 'AI Chat' },
 ];
 
 export default function DashboardLayout() {
@@ -20,7 +34,6 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Close sidebar on navigation (mobile)
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
@@ -31,8 +44,9 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-[#f8faf9] overflow-hidden relative">
-      {/* Mobile Backdrop */}
+    <div className="flex h-screen bg-gradient-to-br from-green-50 via-white to-green-100 overflow-hidden relative">
+
+      {/* BACKDROP MOBILE */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -45,7 +59,7 @@ export default function DashboardLayout() {
         )}
       </AnimatePresence>
 
-      {/* Hamburger Menu (Mobile Only) */}
+      {/* HAMBURGER */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -55,44 +69,45 @@ export default function DashboardLayout() {
         </button>
       </div>
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <motion.aside
         initial={false}
-        animate={{ 
-          x: isOpen ? 0 : -240, 
-          // Always visible on desktop (lg)
-          transition: { type: 'spring', damping: 25, stiffness: 200 }
-        }}
-        className={`fixed lg:static inset-y-0 left-0 w-60 flex-shrink-0 bg-white border-r border-green-100 flex flex-col z-50 transform lg:translate-x-0 ${
+        animate={{ x: isOpen ? 0 : -240 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={`fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-green-100 flex flex-col z-50 ${
           isOpen ? 'shadow-2xl' : ''
         }`}
-        style={{
-          // Use CSS Media Query for LG breakpoint visibility override
-          visibility: undefined 
-        }}
       >
-        <div className="hidden lg:block absolute lg:hidden" /> {/* Dummy to force rerender if needed */}
-        
-        {/* Style hack for responsive sidebar visibility */}
         <style dangerouslySetInnerHTML={{ __html: `
           @media (min-width: 1024px) {
             aside { transform: translateX(0) !important; }
           }
         `}} />
 
-        {/* Logo */}
+        {/* 🔥 LOGO */}
         <div className="px-5 py-5 border-b border-green-100">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-600 to-green-400 flex items-center justify-center text-white text-lg">
-              🌾
+          <div className="flex items-center gap-3">
+
+            <div className="w-11 h-11 flex items-center justify-center rounded-xl 
+            bg-white shadow-md border border-green-100 hover:scale-105 transition duration-300">
+
+              <img 
+                src={logo}
+                alt="AgriHub Logo"
+                className="w-7 h-7 object-contain"
+              />
+
             </div>
+
             <div>
-              <div className="font-bold text-sm text-green-900">AgriHub</div>
-              <div className="text-[10px] text-green-600 font-medium">Indonesia</div>
+              <div className="font-bold text-green-900">AgriHub</div>
+              <div className="text-xs text-green-600 font-medium">Indonesia</div>
             </div>
+
           </div>
         </div>
 
+        {/* NAVIGATION */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map(item => (
             <NavLink
@@ -100,40 +115,62 @@ export default function DashboardLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `sidebar-link ${isActive ? 'active' : ''}`
+                `flex items-center gap-3 px-4 py-3 rounded-xl transition duration-200 group
+                ${isActive 
+                  ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-md' 
+                  : 'text-green-700 hover:bg-green-100'}`
               }
             >
-              <span className="text-base">{item.icon}</span>
+              <div className="group-hover:scale-110 transition">
+                {item.icon}
+              </div>
               <span>{item.label}</span>
             </NavLink>
           ))}
-          {/* Admin-only link */}
+
+          {/* ADMIN */}
           {user?.role === 'admin' && (
-            <NavLink to="/app/admin" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''} border-t border-red-100 mt-2 pt-2 text-red-600`}>
-              <span className="text-base">⚙️</span>
+            <NavLink
+              to="/app/admin"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl mt-2 pt-2 transition
+                ${isActive 
+                  ? 'bg-red-500 text-white' 
+                  : 'text-red-500 hover:bg-red-100'}`
+              }
+            >
+              <Settings size={18} />
               <span>Superadmin</span>
             </NavLink>
           )}
         </nav>
 
-        {/* User Profile */}
+        {/* USER PROFILE */}
         <div className="p-3 border-t border-green-100">
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-green-50">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-green-400 flex items-center justify-center text-white text-sm font-bold">
+
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-600 to-green-400 flex items-center justify-center text-white font-bold">
               {user?.name?.charAt(0) || '?'}
             </div>
-            <div className="flex-1 min-w-0">
+
+            <div className="flex-1">
               <div className="text-sm font-semibold text-green-900 truncate">{user?.name}</div>
-              <div className="text-[10px] text-green-600 capitalize">{user?.role}</div>
+              <div className="text-xs text-green-600 capitalize">{user?.role}</div>
             </div>
-            <button onClick={handleLogout} className="text-green-500 hover:text-red-400 transition-colors text-sm" title="Logout">
+
+            <button
+              onClick={handleLogout}
+              className="text-green-500 hover:text-red-500 transition"
+            >
               ⟵
             </button>
+
           </div>
         </div>
+
       </motion.aside>
 
-      {/* Main Content */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto lg:mt-0 mt-16">
         <motion.div
           key={location.pathname}
@@ -145,6 +182,7 @@ export default function DashboardLayout() {
           <Outlet />
         </motion.div>
       </main>
+
     </div>
   );
 }
