@@ -82,3 +82,6 @@ JWT_SECRET=...
 - **Commit style:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
 - **Branch:** `main` (production), `develop` (aktif development)
 - **Package manager:** npm workspaces
+- **Git Workflow:** 
+  1. Selalu jalankan `git add .`, `git commit`, dan `git push` ke root repository di `https://github.com/CraftThingy-Digital-Innovation/AgriHub.git` setiap ada perubahan.
+  2. Untuk backend deployment (setelah `build` frontend dan bundle masuk ke dalam backend), pastikan melakukan push secara otomatis (melalui script subtree/push) ke remote `https://github.com/CraftThingy-Digital-Innovation/AgriHub-backend.git`.
