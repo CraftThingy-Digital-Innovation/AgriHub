@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import api from '../lib/api';
 
@@ -28,6 +29,7 @@ interface MapPickerProps {
     areaId: string;
     city: string;
     province: string;
+    kabupaten?: string;
   }) => void;
 }
 
@@ -80,7 +82,7 @@ export default function MapPicker({ initialLat, initialLng, onLocationSelect }: 
         }
 
         onLocationSelect({
-          lat, lng, address, postalCode, kecamatan, areaId, city, province
+          lat, lng, address, postalCode, kecamatan, areaId, city, province, kabupaten: city || data.address.county || ''
         });
       }
     } catch (err) {
@@ -107,9 +109,36 @@ export default function MapPicker({ initialLat, initialLng, onLocationSelect }: 
     }
   };
 
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Browser Anda tidak mendukung geolokasi");
+      return;
+    }
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        handlePositionChange(position.coords.latitude, position.coords.longitude);
+      },
+      (error) => {
+        setLoading(false);
+        console.error("Geolocation Error:", error);
+        alert("Gagal mengambil lokasi. Pastikan izin akses lokasi diaktifkan.");
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
+        <button 
+          className="btn-secondary px-3 flex items-center justify-center bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100" 
+          onClick={handleMyLocation} 
+          disabled={loading}
+          title="Lokasi Saat Ini"
+        >
+          <MapPin size={20} />
+        </button>
         <input 
           type="text" 
           className="input-field flex-1" 
@@ -118,8 +147,8 @@ export default function MapPicker({ initialLat, initialLng, onLocationSelect }: 
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
         />
-        <button className="btn-secondary px-4" onClick={handleSearch} disabled={loading}>
-          {loading ? '⏳' : '🔍'}
+        <button className="btn-primary px-4 bg-green-600" onClick={handleSearch} disabled={loading}>
+          {loading ? '⏳' : 'Cari'}
         </button>
       </div>
 
