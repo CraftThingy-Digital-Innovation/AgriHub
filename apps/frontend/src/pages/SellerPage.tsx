@@ -5,6 +5,7 @@ import { Store, Plus, Pencil, Trash2, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../lib/api';
 import MapPicker from '../components/MapPicker';
+import { useAuthStore } from '../stores/authStore';
 
 interface Product {
   id: string;
@@ -31,6 +32,8 @@ export default function SellerPage() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [activeStoreId, setActiveStoreId] = useState<string | null>(null);
+  const [editingStore, setEditingStore] = useState<any | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [storeForm, setStoreForm] = useState({
     name: '',
@@ -61,7 +64,59 @@ export default function SellerPage() {
     images_json: '[]'
   };
 
-  const [productForm, setProductForm] = useState(initialProductForm);
+  const [productForm, setProductForm] = useState<any>(initialProductForm);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const token = useAuthStore.getState().user?.puter_token;
+    if (!token) {
+        alert('Anda harus memasukkan Token Puter di pengaturan chat untuk menggunakan upload gambar via Puter.');
+        return;
+    }
+
+    setUploadingImage(true);
+    try {
+        const puter = (window as any).puter;
+        if (!puter) throw new Error('Puter SDK belum termuat.');
+        
+        puter.setAuthToken(token);
+        // Save to Puter FS
+        const buffer = await file.arrayBuffer();
+        const ext = file.name.split('.').pop();
+        const fileName = `product_${Date.now()}.${ext}`;
+        const filePath = `/AgriHub_Products/${fileName}`;
+        
+        await puter.fs.mkdir('/AgriHub_Products').catch(() => {});
+        await puter.fs.write(filePath, buffer);
+        
+        // Since puter.fs is private to user token unless hosted, 
+        // we host it dynamically if possible, or just create a temporary public link.
+        // Actually, for simplicity and guaranteed public access:
+        // We will store the base64 as well if it's small, or use the puter.js hosting URL if available.
+        // For AgriHub context, let's store the Puter FS path and a Base64 preview for instant UI.
+        
+        const base64 = btoa(
+            new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        const dataUrl = `data:${file.type};base64,${base64}`;
+        
+        // Simpan sebagai string Array JSON di database
+        const currentImages = JSON.parse(productForm.images_json || '[]');
+        currentImages.push(dataUrl); // kita simpan dataUrl untuk kemudahan akses public di AgriHub
+
+        setProductForm((prev: any) => ({
+            ...prev,
+            images_json: JSON.stringify(currentImages)
+        }));
+    } catch (err: any) {
+        console.error('Puter Upload Error:', err);
+        alert('Gagal mengunggah gambar ke Puter Cloud: ' + err.message);
+    } finally {
+        setUploadingImage(false);
+    }
+  };
 
   // ================= QUERY =================
   const { data: storeData, isLoading } = useQuery({
@@ -104,6 +159,23 @@ export default function SellerPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-store'] });
       setShowRegister(false);
+    }
+  });
+
+  const editStoreMutation = useMutation({
+    mutationFn: (data: any) =>
+      api.patch(`/stores/${data.id}`, { name: data.name, address: data.address, provinsi: data.provinsi, kabupaten: data.kabupaten }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-store'] });
+      setEditingStore(null);
+    }
+  });
+
+  const deleteStoreMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/stores/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-store'] });
+      setActiveStoreId('dashboard');
     }
   });
 
@@ -329,7 +401,30 @@ export default function SellerPage() {
               {/* HEADER TOKO AKTIF */}
               <div className="flex justify-between items-center bg-white p-4 rounded-xl border mt-4">
                 <div>
-                  <h2 className="text-xl font-bold text-green-900">{activeStore?.name}</h2>
+                  <h2 className="text-xl font-bold text-green-900 flex items-center gap-2">
+                      {activeStore?.name}
+                      <button onClick={() => {
+                          setEditingStore(activeStore);
+                          setStoreForm({
+                              ...storeForm,
+                              name: activeStore.name,
+                              provinsi: activeStore.provinsi,
+                              kabupaten: activeStore.kabupaten,
+                              kecamatan: activeStore.kecamatan || '',
+                              postal_code: activeStore.postal_code || '',
+                              address: activeStore.address || '',
+                              id: activeStore.id
+                          } as any);
+                      }} className="text-blue-500 hover:text-blue-700 ml-2" title="Edit Toko"><Pencil size={18} /></button>
+                      
+                      {!activeStore?.is_main_branch && (
+                          <button onClick={() => {
+                              if (confirm('Lanjutkan hapus cabang ini?')) {
+                                  deleteStoreMutation.mutate(activeStore.id);
+                              }
+                          }} className="text-red-500 hover:text-red-700" title="Hapus Cabang"><Trash2 size={18} /></button>
+                      )}
+                  </h2>
                   <p className="text-sm text-green-600">
                     {activeStore?.kabupaten}, {activeStore?.provinsi}
                   </p>
@@ -339,6 +434,7 @@ export default function SellerPage() {
                 <button
                   onClick={() => {
                     setEditingProduct(null);
+                    setProductForm({ ...initialProductForm, store_id: activeStore?.id });
                     setShowProductModal(true);
                   }}
                   className="btn-primary flex items-center gap-2"
@@ -400,6 +496,154 @@ export default function SellerPage() {
           )}
         </>
       )}
+
+      {/* MODAL EDIT TOKO */}
+      <AnimatePresence>
+        {editingStore && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
+              <h3 className="text-xl font-bold text-green-900 mb-4">Edit Profil Toko/Cabang</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nama Toko *</label>
+                  <input className="input-field w-full" value={storeForm.name} onChange={e => setStoreForm({...storeForm, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
+                  <textarea className="input-field w-full" value={storeForm.address} onChange={e => setStoreForm({...storeForm, address: e.target.value})} rows={3} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Kabupaten/Kota</label>
+                    <input className="input-field w-full" value={storeForm.kabupaten} onChange={e => setStoreForm({...storeForm, kabupaten: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Provinsi</label>
+                    <input className="input-field w-full" value={storeForm.provinsi} onChange={e => setStoreForm({...storeForm, provinsi: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8">
+                <button onClick={() => setEditingStore(null)} className="btn-secondary">Batal</button>
+                <button onClick={() => editStoreMutation.mutate(storeForm)} className="btn-primary" disabled={editStoreMutation.isPending}>
+                  {editStoreMutation.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL PRODUK */}
+      <AnimatePresence>
+        {showProductModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-bold text-green-900 mb-6 border-b pb-3">
+                {editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}
+              </h3>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk *</label>
+                      <input className="input-field w-full" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} placeholder="Contoh: Bawang Merah Bima" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                        <select className="input-field w-full" value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})}>
+                            <option value="sayuran">Sayuran</option>
+                            <option value="buah">Buah-buahan</option>
+                            <option value="palawija">Palawija</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Harga *</label>
+                        <input type="number" className="input-field w-full" value={productForm.price_per_unit || ''} onChange={e => setProductForm({...productForm, price_per_unit: Number(e.target.value)})} placeholder="Rp" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Stok *</label>
+                        <input type="number" className="input-field w-full" value={productForm.stock_quantity || ''} onChange={e => setProductForm({...productForm, stock_quantity: Number(e.target.value)})} />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Satuan</label>
+                        <input className="input-field w-full" value={productForm.unit} onChange={e => setProductForm({...productForm, unit: e.target.value})} placeholder="kg/ikat" />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Min. Order</label>
+                        <input type="number" className="input-field w-full" value={productForm.min_order || ''} onChange={e => setProductForm({...productForm, min_order: Number(e.target.value)})} />
+                      </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Foto URL / Puter Cloud Upload</label>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <input className="input-field flex-1" placeholder="Paste URL gambar..." onKeyDown={(e: any) => {
+                            if (e.key === 'Enter' && e.target.value) {
+                                e.preventDefault();
+                                const currentImages = JSON.parse(productForm.images_json || '[]');
+                                currentImages.push(e.target.value);
+                                setProductForm({...productForm, images_json: JSON.stringify(currentImages)});
+                                e.target.value = '';
+                            }
+                          }}/>
+                        </div>
+                        <label className="cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 text-center border-2 border-dashed border-blue-200">
+                          {uploadingImage ? 'Mengunggah...' : 'Upload File via Puter'}
+                          <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />
+                        </label>
+                      </div>
+                      
+                      {/* Image Preview List */}
+                      {(() => {
+                        try {
+                          const images = JSON.parse(productForm.images_json || '[]');
+                          if (images.length === 0) return null;
+                          return (
+                            <div className="flex gap-2 mt-3 overflow-x-auto p-1">
+                              {images.map((img: string, i: number) => (
+                                <div key={i} className="relative group shrink-0">
+                                  <img src={img} alt="Product Preview" className="h-16 w-16 object-cover rounded shadow-sm border border-gray-200" />
+                                  <button onClick={() => {
+                                      const newVal = images.filter((_:any, idx:number) => idx !== i);
+                                      setProductForm({...productForm, images_json: JSON.stringify(newVal)});
+                                  }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow">✕</button>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        } catch { return null; }
+                      })()}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi Tambahan</label>
+                      <textarea className="input-field w-full" rows={4} value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} placeholder="Jelaskan kondisi, panen raya, dll." />
+                    </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8">
+                <button onClick={() => setShowProductModal(false)} className="btn-secondary">Batal</button>
+                <button onClick={() => productMutation.mutate(productForm)} className="btn-primary" disabled={productMutation.isPending || uploadingImage}>
+                  {productMutation.isPending ? 'Menyimpan...' : 'Simpan Produk'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
