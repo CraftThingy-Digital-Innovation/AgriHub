@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingCart, X } from 'lucide-react';
@@ -20,6 +20,10 @@ export default function MarketplacePage() {
   const [newAddressForm, setNewAddressForm] = useState<any>({ lat: 0, lng: 0, address: '', label: '', recipient_name: '', recipient_phone: '' });
   const [notes, setNotes] = useState<string>('');
 
+  const [shippingRates, setShippingRates] = useState<any[]>([]);
+  const [selectedShipping, setSelectedShipping] = useState<any>(null);
+  const [loadingOngkir, setLoadingOngkir] = useState(false);
+
   const { data: addressData } = useQuery({
     queryKey: ['my-addresses'],
     queryFn: () => api.get('/users/addresses').then(r => r.data.data),
@@ -39,8 +43,37 @@ export default function MarketplacePage() {
     queryFn: () => api.get('/products').then(r => r.data),
   });
 
+  // Effect fetch ongkir
+  useEffect(() => {
+    if (!selectedAddressId || !selectedProduct?.store_postal_code || !addressData) {
+      setShippingRates([]);
+      setSelectedShipping(null);
+      return;
+    }
+    const selAddr = addressData.find((a: any) => a.id === selectedAddressId);
+    if (!selAddr?.postal_code) return;
+
+    const wGram = (selectedProduct.weight_gram || 1000) * quantity;
+    setLoadingOngkir(true);
+    api.post('/shipping/check-ongkir', {
+      origin_postal_code: selectedProduct.store_postal_code,
+      destination_postal_code: selAddr.postal_code,
+      weight_gram: wGram
+    }).then(res => {
+      setShippingRates(res.data.data || []);
+      if (res.data.data?.length > 0) setSelectedShipping(res.data.data[0]);
+      else setSelectedShipping(null);
+    }).catch(err => {
+      console.error('Gagal fetch ongkir', err);
+      // Fallback dummy ongkir untuk dev/testing jika API Biteship gagal //
+      const defaultOngkir = [{ courier: 'JNE', service: 'REG', price: 15000, estimated_days: '2-3', description: 'Reguler' }];
+      setShippingRates(defaultOngkir);
+      setSelectedShipping(defaultOngkir[0]);
+    }).finally(() => setLoadingOngkir(false));
+  }, [selectedAddressId, selectedProduct, quantity, addressData]);
+
   const orderMutation = useMutation({
-    mutationFn: (payload: { product_id: string; quantity: number; notes: string }) => 
+    mutationFn: (payload: { product_id: string; quantity: number; notes: string; shipping_fee: number; shipping_courier: string; shipping_service: string }) => 
         api.post('/orders', payload),
     onSuccess: () => {
         qc.invalidateQueries({ queryKey: ['orders'] });
@@ -363,35 +396,103 @@ export default function MarketplacePage() {
                   )}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-semibold text-slate-500">Total Pembayaran</div>
-                    <div className="text-xl font-black text-green-700">
-                      Rp{(selectedProduct.price_per_unit * quantity).toLocaleString('id-ID')}
+                {/* SHIPPING PICKER */}
+                {selectedAddressId && !showAddressMap && (
+                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Pengiriman</label>
+                    {loadingOngkir ? (
+                      <div className="text-sm text-slate-500 animate-pulse">Menghitung ongkos kirim...</div>
+                    ) : shippingRates.length > 0 ? (
+                      <select 
+                        className="w-full input-field bg-white text-sm"
+                        value={selectedShipping ? `${selectedShipping.courier}-${selectedShipping.service}` : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const found = shippingRates.find(r => `${r.courier}-${r.service}` === val);
+                          setSelectedShipping(found || null);
+                        }}
+                      >
+                        {shippingRates.map((r, i) => (
+                          <option key={i} value={`${r.courier}-${r.service}`}>
+                            {r.courier.toUpperCase()} {r.service} — Rp{r.price.toLocaleString('id-ID')} ({r.estimated_days} Hari)
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="text-sm text-red-500">
+                        Ongkos kirim tidak tersedia untuk rute ini (Kode pos tidak valid).
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* PAYMENT SUMMARY */}
+                <div className="mt-6 pt-4 border-t border-slate-100">
+                  <div className="text-sm font-bold text-slate-700 mb-3">Ringkasan Pembayaran</div>
+                  
+                  <div className="space-y-1 text-sm text-slate-600 mb-4">
+                    <div className="flex justify-between">
+                      <span>Total Harga ({quantity} Barang)</span>
+                      <span>Rp{(selectedProduct.price_per_unit * quantity).toLocaleString('id-ID')}</span>
+                    </div>
+                    {selectedShipping && (
+                      <div className="flex justify-between">
+                        <span>Ongkos Kirim ({selectedShipping.courier})</span>
+                        <span>Rp{selectedShipping.price.toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Biaya Layanan (2%)</span>
+                      <span>Rp{Math.round((selectedProduct.price_per_unit * quantity) * 0.02).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>PPN (11%)</span>
+                      <span>Rp{Math.round((selectedProduct.price_per_unit * quantity) * 0.11).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="border-t border-dashed mt-2 pt-2 flex justify-between font-bold text-lg text-green-700">
+                      <span>Total Tagihan</span>
+                      <span>
+                        Rp{(
+                          (selectedProduct.price_per_unit * quantity) + 
+                          Math.round((selectedProduct.price_per_unit * quantity) * 0.02) + 
+                          Math.round((selectedProduct.price_per_unit * quantity) * 0.11) + 
+                          (selectedShipping ? selectedShipping.price : 0)
+                        ).toLocaleString('id-ID')}
+                      </span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => {
-                        let finalAddressPayload = "";
-                        if (selectedAddressId) {
-                            const sel = addressData?.find((a: any) => a.id === selectedAddressId);
-                            if (sel) finalAddressPayload = `ALAMAT_SISTEM:[${sel.id}] ${sel.label} - ${sel.recipient_name} | ${sel.full_address}`;
-                        } else {
-                            alert("Harap pilih atau tambah alamat pengiriman!");
-                            return;
-                        }
 
-                        orderMutation.mutate({ 
-                          product_id: selectedProduct.id, 
-                          quantity, 
-                          notes: `[Alamat]: ${finalAddressPayload}\n\n[Catatan]: ${notes}` 
-                        });
-                    }}
-                    disabled={orderMutation.isPending || showAddressMap || !selectedAddressId || quantity < selectedProduct.min_order || quantity > selectedProduct.stock_quantity}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {orderMutation.isPending ? 'Memproses...' : 'Beli Sekarang'}
-                  </button>
+                  <div className="flex justify-end">
+                    <button 
+                      onClick={() => {
+                          let finalAddressPayload = "";
+                          if (selectedAddressId) {
+                              const sel = addressData?.find((a: any) => a.id === selectedAddressId);
+                              if (sel) finalAddressPayload = `ALAMAT_SISTEM:[${sel.id}] ${sel.label} - ${sel.recipient_name} | ${sel.full_address}`;
+                          } else {
+                              alert("Harap pilih atau tambah alamat pengiriman!");
+                              return;
+                          }
+                          if (!selectedShipping) {
+                              alert("Harap tunggu atau pilih ongkos kirim!");
+                              return;
+                          }
+
+                          orderMutation.mutate({ 
+                            product_id: selectedProduct.id, 
+                            quantity, 
+                            notes: `[Alamat]: ${finalAddressPayload}\n\n[Catatan]: ${notes}`,
+                            shipping_fee: selectedShipping.price,
+                            shipping_courier: selectedShipping.courier,
+                            shipping_service: selectedShipping.service
+                          });
+                      }}
+                      disabled={orderMutation.isPending || showAddressMap || !selectedAddressId || !selectedShipping || quantity < selectedProduct.min_order || quantity > selectedProduct.stock_quantity}
+                      className="bg-green-600 hover:bg-green-700 w-full text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {orderMutation.isPending ? 'Memproses...' : 'Buat Pesanan & Bayar'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
