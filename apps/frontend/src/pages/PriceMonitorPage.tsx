@@ -40,7 +40,7 @@ interface KomoditasItem {
 export default function PriceMonitorPage() {
   const [selectedKomoditas, setSelectedKomoditas] = useState('');
   const [showPredict, setShowPredict] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [selectedMarketType, setSelectedMarketType] = useState(''); // Default Semua Pasar
   const [selectedProvDetail, setSelectedProvDetail] = useState<{prov: string, price: number} | null>(null);
   
