@@ -15,6 +15,7 @@ type FlowStep =
   | 'password'      // Step 2: Login — isi password
   | 'register'      // Step 2: Register — isi semua data
   | 'otp'           // Step 3: Verifikasi OTP WA
+  | 'email_otp'     // Step 4: Verifikasi OTP Email
   | 'puter_profile' // Step setelah Puter: isi phone + password
   | 'forgot_password' // Lupa password: kirim OTP
   | 'reset_otp'      // Verifikasi OTP reset
@@ -131,9 +132,11 @@ export default function LoginPage() {
       if (!needsPhone && !needsEmail) {
         navigate('/app', { replace: true });
       } else {
-        // Biarkan di halaman ini untuk selesaikan verifikasi
         if (needsPhone) setStep('otp');
-        else if (needsEmail) setError('Mohon verifikasi email Anda (cek inbox) untuk me-refresh dashboard.');
+        else if (needsEmail) {
+          api.post('/auth/send-email-otp').catch(() => {});
+          setStep('email_otp');
+        }
       }
     }
   }, []);
@@ -244,9 +247,29 @@ export default function LoginPage() {
   async function handleResendOtp() {
     setError(''); setSuccess('');
     try {
-      await api.post('/auth/send-phone-otp');
-      setSuccess('OTP dikirim ulang!');
-    } catch { setError('Gagal kirim OTP'); }
+      if (step === 'email_otp') {
+        await api.post('/auth/send-email-otp');
+        setSuccess('Kode OTP Email dikirim ulang!');
+      } else {
+        await api.post('/auth/send-phone-otp');
+        setSuccess('OTP WhatsApp dikirim ulang!');
+      }
+    } catch { setError('Gagal kirim ulang OTP'); }
+  }
+
+  async function handleVerifyEmailOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/verify-email-otp', { otp: form.otp });
+      if (data.success) {
+        updateUser(data.data.user);
+        setStep('success');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Kode OTP Email salah');
+    } finally { setLoading(false); }
   }
 
   // ── Puter OAuth ───────────────────────────────────────────────────────────
@@ -275,6 +298,9 @@ export default function LoginPage() {
           setIsPuterFlow(true);
           setForm(f => ({ ...f, name: data.data.user.name || '' }));
           setStep('puter_profile');
+        } else if (data.data.needs_email_verify) {
+          await api.post('/auth/send-email-otp');
+          setStep('email_otp');
         } else {
           navigate(getRedirectUrl());
         }
@@ -354,19 +380,32 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     if (form.password !== form.retypePassword) { setError('Password tidak cocok'); return; }
+    
+    const passed = rules.filter(r => r.test(form.password)).length;
+    if (passed < 5) { setError('Password belum memenuhi standar keamanan.'); return; }
+    
     setLoading(true);
     try {
       await api.post('/auth/reset-password', {
-        identifier: form.identifier,
-        otp: form.otp,
+        token: form.otp, // In reset flow, otp field holds the reset token
         password: form.password
       });
-      setSuccess('Password berhasil diatur ulang. Silakan login.');
+      setSuccess('Password berhasil diubah. Silakan login kembali.');
       setStep('identifier');
-      setForm(f => ({ ...f, password: '', retypePassword: '' }));
+      setForm(f => ({ ...f, password: '', retypePassword: '', otp: '' }));
     } catch (err: any) {
       setError(err.response?.data?.error || 'Gagal mereset password');
     } finally { setLoading(false); }
+  }
+
+  async function handleRequestWALink() {
+    setError(''); setLoading(true);
+    try {
+      const { data } = await api.post('/auth/request-whatsapp-link');
+      const waUrl = `https://wa.me/6285788061314?text=VERIFIKASI%20${data.token}`;
+      window.open(waUrl, '_blank');
+    } catch { setError('Gagal generate token WhatsApp'); }
+    finally { setLoading(false); }
   }
 
   function getRedirectUrl() {
@@ -659,6 +698,46 @@ export default function LoginPage() {
                 </form>
               </motion.div>
             )}
+            {/* ── STEP: email_otp verification ─────────────────────────────── */}
+            {step === 'email_otp' && (
+              <motion.div key="email_otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleVerifyEmailOtp} className="space-y-5">
+                  <div className="text-center space-y-2">
+                    <div className="text-5xl">📧</div>
+                    <h2 className="font-black text-green-900 text-lg">Verifikasi Email</h2>
+                    <p className="text-sm text-green-600">
+                      Kode verifikasi 6-digit telah dikirim ke email Anda. Periksa folder Inbox atau Spam.
+                    </p>
+                  </div>
+
+                  {success && <div className="bg-green-50 text-green-700 text-[11px] font-bold p-3 rounded-xl text-center border border-green-100">{success}</div>}
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Kode Verifikasi (6 Digit)</label>
+                    <input id="email-otp-input"
+                      className="w-full px-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-black text-green-900 text-center text-2xl tracking-[0.5em]"
+                      placeholder="• • • • • •"
+                      value={form.otp}
+                      onChange={set('otp')}
+                      maxLength={6}
+                      inputMode="numeric"
+                      required autoFocus />
+                  </div>
+
+                  {error && <p className="text-red-500 text-[11px] font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
+
+                  <button type="submit" id="btn-verify-email-otp" disabled={loading || form.otp.length !== 6}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : '📧 Verifikasi Email'}
+                  </button>
+
+                  <button type="button" onClick={handleResendOtp}
+                    className="w-full text-green-600 font-bold text-sm hover:underline">
+                    Kirim Ulang Kode Email
+                  </button>
+                </form>
+              </motion.div>
+            )}
 
             {/* ── STEP: forgot_password ────────────────────────────────── */}
             {step === 'forgot_password' && (
@@ -760,11 +839,25 @@ export default function LoginPage() {
                   className="text-6xl">🎉</motion.div>
                 <div>
                   <h2 className="font-black text-green-900 text-xl">Selamat Datang!</h2>
-                  <p className="text-green-600 text-sm mt-1">Nomor WA berhasil diverifikasi. Akun siap digunakan!</p>
+                  <p className="text-green-600 text-sm mt-1">Akun Anda berhasil diverifikasi. Selamat bergabung!</p>
                 </div>
+
+                <div className="bg-blue-50 p-4 rounded-[2rem] border border-blue-100 text-left space-y-3">
+                   <p className="text-[11px] font-black text-blue-800 uppercase tracking-widest flex items-center gap-2">
+                     <Shield size={14} /> Keamanan Bot
+                   </p>
+                   <p className="text-xs text-blue-700 leading-relaxed">
+                     Agar robot Asisten AI dapat mengenali Anda di WhatsApp secara personal, pastikan akun WhatsApp Anda sudah tertaut.
+                   </p>
+                   <button onClick={handleRequestWALink} disabled={loading}
+                     className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+                     {loading ? <Loader2 size={12} className="animate-spin" /> : '🔗 Tautkan WhatsApp Sekarang'}
+                   </button>
+                </div>
+
                 <button id="btn-go-app" onClick={() => navigate(getRedirectUrl())}
                   className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all">
-                  Masuk ke AgriHub 🌾
+                  Masuk ke Dashboard 🌾
                 </button>
               </motion.div>
             )}
