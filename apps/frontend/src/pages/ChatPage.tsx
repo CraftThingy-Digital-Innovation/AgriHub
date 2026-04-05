@@ -30,6 +30,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { useModalStore } from '../store/useModalStore';
+import { usePublicSettings } from '../hooks/usePublicSettings';
 
 // Import api dari lib lokal Anda
 const api_placeholder = {
@@ -139,6 +140,8 @@ function TypingIndicator() {
 
 function ChatContainer() {
   const { showAlert } = useModalStore();
+  const { data: publicSettings } = usePublicSettings();
+  const waBotNumber = publicSettings?.wa_bot_number || '';
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -383,17 +386,15 @@ function ChatContainer() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <a 
-              href={
-                (import.meta as any).env?.VITE_WA_BOT_NUMBER 
-                ? `https://wa.me/${(import.meta as any).env.VITE_WA_BOT_NUMBER}?text=Halo%20Bot`
-                : `https://api.whatsapp.com/send?text=Halo%20Bot`
-              }
-              target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 transition-all rounded-lg text-xs font-bold"
-            >
-              💬 WhatsApp Bot
-            </a>
+            {waBotNumber && (
+              <a 
+                href={`https://wa.me/${waBotNumber}?text=Halo%20Bot`}
+                target="_blank" rel="noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 transition-all rounded-lg text-xs font-bold"
+              >
+                💬 WhatsApp Bot
+              </a>
+            )}
             <button onClick={() => setMessages([{ id: 'welcome', role: 'assistant', content: 'Chat dibersihkan. Ada lagi yang bisa saya bantu?', timestamp: new Date() }])} className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-red-500 transition-all text-xs font-bold">
               <Trash2 size={16} /> <span>Bersihkan</span>
             </button>

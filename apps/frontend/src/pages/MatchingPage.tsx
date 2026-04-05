@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
+import { usePublicSettings } from '../hooks/usePublicSettings';
 import logo from '../assets/agrihub-logo.png';
 import {
   Link2,
@@ -34,6 +35,9 @@ export default function MatchingPage() {
   const qc = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'feed' | 'demand'>('feed');
+
+  const { data: publicSettings } = usePublicSettings();
+  const waBotNumber = publicSettings?.wa_bot_number || '';
 
   const [demandForm, setDemandForm] = useState({
     komoditas: '',
@@ -187,17 +191,15 @@ export default function MatchingPage() {
                           Rp{m.product_price.toLocaleString('id-ID')}<span className="text-sm text-gray-500 font-normal">/kg</span>
                         </div>
                         <div className="flex gap-2 mt-3">
-                          <a 
-                            href={
-                              (import.meta as any).env.VITE_WA_BOT_NUMBER 
-                              ? `https://wa.me/${(import.meta as any).env.VITE_WA_BOT_NUMBER}?text=BELI%20${m.id}`
-                              : `https://api.whatsapp.com/send?text=BELI%20${m.id}`
-                            }
-                            target="_blank" rel="noreferrer"
-                            className="flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold transition"
-                          >
-                             Beli via WA
-                          </a>
+                          {waBotNumber ? (
+                            <a 
+                              href={`https://wa.me/${waBotNumber}?text=BELI%20${m.id}`}
+                              target="_blank" rel="noreferrer"
+                              className="flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold transition"
+                            >
+                               Beli via WA
+                            </a>
+                          ) : null}
                           <a 
                             href={`/app/marketplace?buy=${m.product_id}`}
                             className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-full text-sm font-semibold transition"

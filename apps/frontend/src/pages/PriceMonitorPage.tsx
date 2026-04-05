@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import api from '../lib/api';
 import NationalPriceMap from '../components/NationalPriceMap';
 
@@ -39,6 +39,9 @@ export default function PriceMonitorPage() {
   // ── AgriHub local chart (terpisah untuk prediksi AI) ──────────────────────
   const [selectedKomoditas, setSelectedKomoditas] = useState('');
   const [showPredict, setShowPredict] = useState(false);
+
+  // ── Inflation filter ──────────────────────────────────────────────────────
+  const [inflationMode, setInflationMode] = useState<'yoy' | 'mom'>('yoy');
 
   const qc = useQueryClient();
 
@@ -84,6 +87,24 @@ export default function PriceMonitorPage() {
     queryKey: ['price-predict', selectedKomoditas],
     queryFn: () => api.get(`/price/predict/${selectedKomoditas}`).then(r => r.data),
     enabled: !!selectedKomoditas && showPredict,
+  });
+
+  // ── Inflasi Pangan (PIHPS) ──────────────────────────────────────────────
+  const { data: inflationData, isLoading: inflationLoading } = useQuery({
+    queryKey: ['pihps-inflation', inflationMode],
+    queryFn: () => {
+      if (inflationMode === 'mom') {
+        // Month-over-Month: 30 hari lalu
+        const d = latestDateData?.date ? new Date(latestDateData.date) : new Date();
+        const prev = new Date(d);
+        prev.setMonth(prev.getMonth() - 1);
+        return api.get(`/pihps/inflation?date_prev=${prev.toISOString().slice(0, 10)}`).then(r => r.data);
+      }
+      // Year-over-Year default
+      return api.get('/pihps/inflation').then(r => r.data);
+    },
+    enabled: !!latestDateData,
+    staleTime: 1000 * 60 * 10,
   });
 
   // Data peta PIHPS — plain text commodity name
@@ -363,6 +384,111 @@ export default function PriceMonitorPage() {
         </motion.div>
 
       </div>
+
+      {/* ── INFLASI PANGAN ──────────────────────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-semibold text-green-900 flex items-center gap-2">
+              <TrendingUp size={18} className="text-orange-500" />
+              Inflasi Harga Pangan Nasional
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Perubahan harga komoditas · Sumber: PIHPS · 
+              {inflationData?.data?.date_prev && inflationData?.data?.date_now && (
+                <> Perbandingan {inflationData.data.date_prev} → {inflationData.data.date_now}</>
+              )}
+            </p>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="flex bg-gray-100 p-1 rounded-xl gap-1 self-start sm:self-auto">
+            {([['yoy', 'YoY (1 Tahun)'], ['mom', 'MoM (1 Bulan)']] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setInflationMode(key)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
+                  inflationMode === key
+                    ? 'bg-white text-orange-600 shadow'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {inflationLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-8 bg-gray-100 animate-pulse rounded-lg" />
+            ))}
+          </div>
+        ) : !inflationData?.data?.items?.length ? (
+          <div className="text-center py-10 text-gray-400 text-sm">
+            <p>Data inflasi belum tersedia.</p>
+            <p className="text-xs mt-1">Data PIHPS dibutuhkan untuk periode perbandingan sekurang-kurangnya 1 bulan.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-gray-400 border-b">
+                  <th className="text-left py-2 font-semibold">Komoditas</th>
+                  <th className="text-right py-2 font-semibold">Harga Lalu</th>
+                  <th className="text-right py-2 font-semibold">Harga Kini</th>
+                  <th className="text-right py-2 font-semibold">Perubahan</th>
+                  <th className="py-2 w-32"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {inflationData.data.items.slice(0, 15).map((item: any) => {
+                  const isUp = item.trend === 'up';
+                  const isDown = item.trend === 'down';
+                  const pct = item.change_pct ?? 0;
+                  const absPct = Math.abs(pct);
+                  return (
+                    <tr key={item.commodity_name} className="hover:bg-gray-50 transition">
+                      <td className="py-2.5 font-medium text-gray-800">{item.commodity_name}</td>
+                      <td className="text-right text-gray-500 py-2.5">
+                        Rp{item.price_prev?.toLocaleString('id-ID')}
+                      </td>
+                      <td className="text-right font-semibold text-gray-800 py-2.5">
+                        Rp{item.price_now?.toLocaleString('id-ID')}
+                      </td>
+                      <td className="text-right py-2.5">
+                        <span className={`inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-full ${
+                          isUp ? 'bg-red-50 text-red-600' :
+                          isDown ? 'bg-green-50 text-green-600' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>
+                          {isUp ? <TrendingUp size={12} /> : isDown ? <TrendingDown size={12} /> : <Minus size={12} />}
+                          {isUp ? '+' : ''}{pct.toFixed(2)}%
+                        </span>
+                      </td>
+                      <td className="py-2.5 pl-3">
+                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden w-28">
+                          <div
+                            className={`h-1.5 rounded-full ${isUp ? 'bg-red-400' : isDown ? 'bg-green-400' : 'bg-gray-300'}`}
+                            style={{ width: `${Math.min(100, absPct * 5)}%` }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {inflationData.data.items.length > 15 && (
+              <p className="text-center text-xs text-gray-400 mt-3">
+                Menampilkan 15 komoditas dengan perubahan harga terbesar
+              </p>
+            )}
+          </div>
+        )}
+      </motion.div>
+
     </div>
   );
 }
