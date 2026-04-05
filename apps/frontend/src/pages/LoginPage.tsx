@@ -16,6 +16,9 @@ type FlowStep =
   | 'register'      // Step 2: Register — isi semua data
   | 'otp'           // Step 3: Verifikasi OTP WA
   | 'puter_profile' // Step setelah Puter: isi phone + password
+  | 'forgot_password' // Lupa password: kirim OTP
+  | 'reset_otp'      // Verifikasi OTP reset
+  | 'reset_password' // Set password baru
   | 'success';
 
 interface FormState {
@@ -23,6 +26,7 @@ interface FormState {
   name: string; username: string; email: string;
   password: string; retypePassword: string;
   otp: string; phone: string;
+  resetMethod: 'wa' | 'email';
 }
 
 // ─── Password strength utils ──────────────────────────────────────────────────
@@ -94,11 +98,13 @@ export default function LoginPage() {
   const [form, setForm] = useState<FormState>({
     identifier: '', name: '', username: '', email: '',
     password: '', retypePassword: '', otp: '', phone: '',
+    resetMethod: 'wa',
   });
   const [accountExists, setAccountExists] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const [resetMethods, setResetMethods] = useState<string[]>([]);
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle');
   const [isPuterFlow, setIsPuterFlow] = useState(false);
   const { setAuth, updateUser } = useAuthStore();
@@ -115,10 +121,21 @@ export default function LoginPage() {
     if (mode === 'register') setStep('register');
   }, []);
 
-  // Redirect jika sudah login
+  // Redirect jika sudah login & verifikasi lengkap (Nomor HP & Email)
   useEffect(() => {
-    const token = useAuthStore.getState().token;
-    if (token) navigate('/app', { replace: true });
+    const { token, user } = useAuthStore.getState();
+    if (token && user) {
+      const needsPhone = !user.phone_verified;
+      const needsEmail = user.email && !user.email_verified;
+
+      if (!needsPhone && !needsEmail) {
+        navigate('/app', { replace: true });
+      } else {
+        // Biarkan di halaman ini untuk selesaikan verifikasi
+        if (needsPhone) setStep('otp');
+        else if (needsEmail) setError('Mohon verifikasi email Anda (cek inbox) untuk me-refresh dashboard.');
+      }
+    }
   }, []);
 
   // Username realtime check
@@ -287,6 +304,71 @@ export default function LoginPage() {
     } finally { setLoading(false); }
   }
 
+  // ── Forgot Password Handlers ─────────────────────────────────────────────
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError(''); setSuccess('');
+    if (!form.identifier) return;
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/forgot-password', { identifier: form.identifier });
+      setResetMethods(data.methods);
+      if (data.methods.length === 1) {
+        const method = data.methods[0];
+        setForm(f => ({ ...f, resetMethod: method }));
+        await api.post('/auth/request-reset-otp', { identifier: form.identifier, method });
+        setStep('reset_otp');
+        setSuccess(`OTP terkirim ke ${method === 'wa' ? 'WhatsApp' : 'Email'} Anda.`);
+      } else {
+        // Biarkan di step ini tapi render pilihan
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Identitas tidak ditemukan');
+    } finally { setLoading(true); setLoading(false); }
+  }
+
+  async function handleSelectResetMethod(method: 'wa' | 'email') {
+    setError(''); setLoading(true);
+    try {
+      setForm(f => ({ ...f, resetMethod: method }));
+      await api.post('/auth/request-reset-otp', { identifier: form.identifier, method });
+      setStep('reset_otp');
+      setSuccess(`OTP terkirim ke ${method === 'wa' ? 'WhatsApp' : 'Email'} Anda.`);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Gagal mengirim OTP');
+    } finally { setLoading(false); }
+  }
+
+  async function handleVerifyResetOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError(''); setLoading(true);
+    try {
+      await api.post('/auth/verify-reset-otp', { identifier: form.identifier, otp: form.otp });
+      setStep('reset_password');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'OTP salah atau kadaluarsa');
+    } finally { setLoading(false); }
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (form.password !== form.retypePassword) { setError('Password tidak cocok'); return; }
+    setLoading(true);
+    try {
+      await api.post('/auth/reset-password', {
+        identifier: form.identifier,
+        otp: form.otp,
+        password: form.password
+      });
+      setSuccess('Password berhasil diatur ulang. Silakan login.');
+      setStep('identifier');
+      setForm(f => ({ ...f, password: '', retypePassword: '' }));
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Gagal mereset password');
+    } finally { setLoading(false); }
+  }
+
   function getRedirectUrl() {
     const lid = searchParams.get('lid');
     const action = searchParams.get('action');
@@ -386,6 +468,13 @@ export default function LoginPage() {
                   </div>
 
                   <PasswordInput id="login-password" label="Password" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} />
+
+                  <div className="flex justify-end -mt-2">
+                    <button type="button" onClick={() => setStep('forgot_password')}
+                      className="text-xs font-bold text-green-700 hover:text-green-900 transition-colors">
+                      Lupa password?
+                    </button>
+                  </div>
 
                   {error && <p className="text-red-500 text-[11px] font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
 
@@ -560,6 +649,98 @@ export default function LoginPage() {
                   <button type="button" onClick={handleResendOtp}
                     className="w-full text-green-600 font-bold text-sm hover:underline">
                     Kirim Ulang OTP
+                  </button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: forgot_password ────────────────────────────────── */}
+            {step === 'forgot_password' && (
+              <motion.div key="forgot_password" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleForgotPassword} className="space-y-5">
+                  <div className="flex items-center gap-3 pb-1">
+                    <button type="button" onClick={() => setStep('password')} className="text-green-600"><ChevronLeft size={20} /></button>
+                    <h2 className="font-black text-green-900 text-lg">Lupa Password?</h2>
+                  </div>
+                  <p className="text-xs text-green-700">Masukkan identitas Anda (Phone/Username/Email) untuk mendapatkan kode reset.</p>
+                  
+                  <div className="space-y-1">
+                    <input className="w-full px-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 outline-none transition-all font-bold text-green-900"
+                      placeholder="Identitas Anda" value={form.identifier} onChange={set('identifier')} required disabled={resetMethods.length > 0} />
+                  </div>
+
+                  {resetMethods.length > 1 && (
+                    <div className="space-y-3 pt-2">
+                      <p className="text-[11px] font-bold text-green-800 text-center uppercase tracking-wider">Pilih Metode Pengiriman OTP</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button type="button" onClick={() => handleSelectResetMethod('wa')}
+                          className="p-4 rounded-2xl border-2 border-green-100 hover:border-green-500 hover:bg-green-50 transition-all flex flex-col items-center gap-2">
+                          <Phone className="text-green-600" size={24} />
+                          <span className="text-xs font-black text-green-900">WhatsApp</span>
+                        </button>
+                        <button type="button" onClick={() => handleSelectResetMethod('email')}
+                          className="p-4 rounded-2xl border-2 border-green-100 hover:border-green-500 hover:bg-green-50 transition-all flex flex-col items-center gap-2">
+                          <Mail className="text-green-600" size={24} />
+                          <span className="text-xs font-black text-green-900">Email</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && <p className="text-red-500 text-[11px] font-bold">{error}</p>}
+
+                  {resetMethods.length <= 1 && (
+                    <button type="submit" disabled={loading}
+                      className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2">
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : 'Kirim Kode Verifikasi'}
+                    </button>
+                  )}
+
+                  {resetMethods.length > 0 && (
+                    <button type="button" onClick={() => { setResetMethods([]); setError(''); }}
+                      className="w-full text-xs font-bold text-green-600 hover:text-green-800">
+                      Ganti Identitas
+                    </button>
+                  )}
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: reset_otp ───────────────────────────────────────── */}
+            {step === 'reset_otp' && (
+              <motion.div key="reset_otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleVerifyResetOtp} className="space-y-5 text-center">
+                  <h2 className="font-black text-green-900 text-lg">Verifikasi Reset</h2>
+                  <p className="text-xs text-green-700">Masukkan 6 digit kode yang dikirim ke {form.resetMethod === 'wa' ? 'WhatsApp' : 'Email'}.</p>
+                  {success && <p className="text-[11px] text-green-600 font-bold">{success}</p>}
+                  
+                  <input className="w-full px-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 outline-none transition-all font-black text-green-900 text-center text-2xl tracking-[0.5em]"
+                    placeholder="• • • • • •" value={form.otp} onChange={set('otp')} maxLength={6} required autoFocus />
+
+                  {error && <p className="text-red-500 text-[11px] font-bold">{error}</p>}
+
+                  <button type="submit" disabled={loading || form.otp.length !== 6}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : 'Verifikasi Kode'}
+                  </button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: reset_password ──────────────────────────────────── */}
+            {step === 'reset_password' && (
+              <motion.div key="reset_password" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleResetPassword} className="space-y-5">
+                  <h2 className="font-black text-green-900 text-lg">Atur Password Baru</h2>
+                  
+                  <PasswordInput id="new-password" label="Password Baru" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} />
+                  <PasswordInput id="re-new-password" label="Konfirmasi Password Baru" value={form.retypePassword} onChange={v => setForm(f => ({ ...f, retypePassword: v }))} />
+
+                  {error && <p className="text-red-500 text-[11px] font-bold">{error}</p>}
+
+                  <button type="submit" disabled={loading}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : 'Simpan Password Baru'}
                   </button>
                 </form>
               </motion.div>

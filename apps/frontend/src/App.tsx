@@ -16,8 +16,17 @@ import WaSetupPage from './pages/WaSetupPage';
 import { GlobalModals } from './components/GlobalModals';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore(s => s.token);
+  const { token, user } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
+
+  // Enforce verification: Nominal phone and email MUST be verified
+  const needsPhoneVerify = user && !user.phone_verified;
+  const needsEmailVerify = user && user.email && !user.email_verified;
+
+  if (needsPhoneVerify || needsEmailVerify) {
+    return <Navigate to="/login?step=verify" replace />;
+  }
+
   return <>{children}</>;
 }
 
