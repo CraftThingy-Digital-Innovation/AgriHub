@@ -11,10 +11,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import {
-  BarChart3,
-  ClipboardEdit
-} from "lucide-react";
+import { BarChart3 } from 'lucide-react';
 import api from '../lib/api';
 import NationalPriceMap from '../components/NationalPriceMap';
 
@@ -38,14 +35,26 @@ interface KomoditasItem {
 }
 
 export default function PriceMonitorPage() {
+  // State PIHPS Map filters (pakai plain-text nama komoditas, bukan UUID)
+  const [selectedPihpsCommodity, setSelectedPihpsCommodity] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedMarketType, setSelectedMarketType] = useState('');
+  const [selectedProvDetail, setSelectedProvDetail] = useState<{prov: string, price: number} | null>(null);
+
+  // State AgriHub local chart (tetap terpisah untuk prediksi AI)
   const [selectedKomoditas, setSelectedKomoditas] = useState('');
   const [showPredict, setShowPredict] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
-  const [selectedMarketType, setSelectedMarketType] = useState(''); // Default Semua Pasar
-  const [selectedProvDetail, setSelectedProvDetail] = useState<{prov: string, price: number} | null>(null);
-  
+
   const qc = useQueryClient();
 
+  // Daftar komoditas PIHPS (plain text) — untuk dropdown filter peta
+  const { data: pihpsCommoditiesData } = useQuery({
+    queryKey: ['pihps-commodities'],
+    queryFn: () => api.get('/pihps/commodities').then(r => r.data),
+    staleTime: 1000 * 60 * 60, // Cache 1 jam
+  });
+
+  // Daftar komoditas AgriHub — untuk chart lokal & prediksi AI
   const { data: komoditasData } = useQuery({
     queryKey: ['komoditas-list'],
     queryFn: () => api.get('/products/komoditas/list').then(r => r.data),
@@ -70,14 +79,15 @@ export default function PriceMonitorPage() {
     enabled: !!selectedKomoditas && showPredict,
   });
 
+  // Data peta PIHPS — gunakan selectedPihpsCommodity (plain text)
   const { data: mapDataRaw } = useQuery({
-    queryKey: ['pihps-map-data', selectedKomoditas, selectedDate, selectedMarketType],
+    queryKey: ['pihps-map-data', selectedPihpsCommodity, selectedDate, selectedMarketType],
     queryFn: () => {
-        const queryParams = new URLSearchParams();
-        if (selectedKomoditas) queryParams.append('commodity', selectedKomoditas);
-        if (selectedDate) queryParams.append('date', selectedDate);
-        if (selectedMarketType) queryParams.append('marketType', selectedMarketType);
-        return api.get(`/pihps/map-data?${queryParams.toString()}`).then(r => r.data);
+      const queryParams = new URLSearchParams();
+      if (selectedPihpsCommodity) queryParams.append('commodity', selectedPihpsCommodity);
+      if (selectedDate) queryParams.append('date', selectedDate);
+      if (selectedMarketType) queryParams.append('marketType', selectedMarketType);
+      return api.get(`/pihps/map-data?${queryParams.toString()}`).then(r => r.data);
     },
   });
 
@@ -86,7 +96,8 @@ export default function PriceMonitorPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['prices-latest'] }),
   });
 
-  const komoditasList: KomoditasItem[] = komoditasData?.data || [];
+  const pihpsCommodities: string[] = pihpsCommoditiesData?.data || [];
+  const komoditasList = komoditasData?.data || [];
   const latestPrices: PriceRecord[] = priceData?.data || [];
 
   const chartData = [
@@ -154,16 +165,15 @@ export default function PriceMonitorPage() {
                 <label className="block text-xs font-semibold text-gray-500 mb-1">KOMODITAS</label>
                 <select
                   className="input-field w-full h-10 text-sm"
-                  value={selectedKomoditas}
+                  value={selectedPihpsCommodity}
                   onChange={(e) => {
-                    setSelectedKomoditas(e.target.value);
-                    setShowPredict(false);
+                    setSelectedPihpsCommodity(e.target.value);
                     setSelectedProvDetail(null);
                   }}
                 >
                   <option value="">Semua Komoditas / Pilih...</option>
-                  {komoditasList.map(k => (
-                    <option key={k.id} value={k.id}>{k.nama}</option>
+                  {pihpsCommodities.map((name: string) => (
+                    <option key={name} value={name}>{name}</option>
                   ))}
                 </select>
             </div>
