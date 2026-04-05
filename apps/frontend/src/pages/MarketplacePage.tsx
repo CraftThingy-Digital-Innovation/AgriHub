@@ -5,6 +5,8 @@ import { Search, ShoppingCart, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import logo from '../assets/agrihub-logo.png';
+import MapPicker from '../components/MapPicker';
+import { MapPin } from 'lucide-react';
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
@@ -12,8 +14,25 @@ export default function MarketplacePage() {
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState<number>(1);
-  const [address, setAddress] = useState<string>('');
+  const [address, setAddress] = useState<string>(''); // fallback
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [showAddressMap, setShowAddressMap] = useState<boolean>(false);
+  const [newAddressForm, setNewAddressForm] = useState<any>({ lat: 0, lng: 0, address: '', label: '', recipient_name: '', recipient_phone: '' });
   const [notes, setNotes] = useState<string>('');
+
+  const { data: addressData } = useQuery({
+    queryKey: ['my-addresses'],
+    queryFn: () => api.get('/users/addresses').then(r => r.data.data),
+  });
+
+  const addAddressMutation = useMutation({
+    mutationFn: (payload: any) => api.post('/users/addresses', payload),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['my-addresses'] });
+      setSelectedAddressId(res.data.data.id);
+      setShowAddressMap(false);
+    }
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ['products'],
@@ -144,8 +163,13 @@ export default function MarketplacePage() {
 
                         <button 
                           onClick={() => {
-                            setSelectedProduct(product);
-                            setQuantity(product.min_order || 1);
+                            if (product) {
+                              setSelectedProduct(product);
+                              setQuantity(product.min_order);
+                              if (addressData && addressData.length > 0) {
+                                setSelectedAddressId(addressData[0].id);
+                              }
+                            }
                             setAddress('');
                             setNotes('');
                           }}
@@ -253,51 +277,122 @@ export default function MarketplacePage() {
                     Tersedia {selectedProduct.stock_quantity} {selectedProduct.unit}
                   </p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">
-                    Alamat Pengiriman (Wajib)
-                  </label>
-                  <textarea 
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl resize-none h-20 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none"
-                    placeholder="Masukkan alamat pengiriman lengkap (Kecamatan, Kota, Kode Pos)"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">
-                    Catatan untuk Penjual (Opsional)
-                  </label>
-                  <textarea 
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl resize-none h-16 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none"
-                    placeholder="Contoh: Tolong pilihkan yang merah-merah ya pak..."
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-semibold text-slate-500">Total Pembayaran</div>
-                  <div className="text-xl font-black text-green-700">
-                    Rp{(selectedProduct.price_per_unit * quantity).toLocaleString('id-ID')}
+                <div className="space-y-3 p-4 bg-white rounded-xl border-2 border-green-50 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <MapPin size={64} />
                   </div>
+                  
+                  {!showAddressMap ? (
+                    <>
+                      <div className="flex justify-between items-center z-10 relative">
+                        <label className="block text-sm font-bold text-slate-700">Daftar Alamat Pengiriman</label>
+                        <button 
+                          onClick={() => setShowAddressMap(true)}
+                          className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100 transition"
+                        >
+                          + Tambah Alamat Baru
+                        </button>
+                      </div>
+                      
+                      {addressData && addressData.length > 0 ? (
+                        <select 
+                          className="w-full input-field z-10 relative bg-white"
+                          value={selectedAddressId}
+                          onChange={(e) => setSelectedAddressId(e.target.value)}
+                        >
+                          {addressData.map((addr: any) => (
+                            <option key={addr.id} value={addr.id}>
+                              {addr.label} — {addr.recipient_name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100">
+                          Belum ada alamat. Silakan tambah alamat.
+                        </div>
+                      )}
+                      
+                      <textarea 
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl resize-none h-16 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none relative z-10 mt-2"
+                        placeholder="Catatan tambahan kurir (Opsional)"
+                      />
+                    </>
+                  ) : (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 relative z-10 bg-white">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <label className="block text-sm font-bold text-slate-700">Tambah Alamat Baru</label>
+                        <button onClick={() => setShowAddressMap(false)} className="text-xs font-bold text-red-500 hover:text-red-700">
+                          Batal
+                        </button>
+                      </div>
+
+                      <MapPicker onLocationSelect={(loc: any) => 
+                        setNewAddressForm((f: any) => ({
+                          ...f,
+                          latitude: loc.lat, longitude: loc.lng,
+                          full_address: loc.address,
+                          provinsi: loc.province || '', kabupaten: loc.kabupaten || loc.city || '', kecamatan: loc.kecamatan || '', postal_code: loc.postalCode || ''
+                        }))
+                      } />
+                      
+                      {newAddressForm.latitude ? (
+                        <div className="space-y-2 pt-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <input className="input-field text-sm" placeholder="Label (ex: Rumah / Kantor)" onChange={e => setNewAddressForm((f: any) => ({ ...f, label: e.target.value }))} />
+                            <input className="input-field text-sm" placeholder="Nama Penerima" onChange={e => setNewAddressForm((f: any) => ({ ...f, recipient_name: e.target.value }))} />
+                          </div>
+                          <input className="input-field text-sm w-full" placeholder="No HP (+62...)" onChange={e => setNewAddressForm((f: any) => ({ ...f, recipient_phone: e.target.value }))} />
+                          <textarea 
+                            className="input-field text-sm min-h-[60px]" 
+                            placeholder="Detail Jalan (Wajib)" 
+                            value={newAddressForm.full_address || ''} 
+                            onChange={e => setNewAddressForm((f: any) => ({ ...f, full_address: e.target.value }))} 
+                          />
+                          <button 
+                            onClick={() => addAddressMutation.mutate(newAddressForm)}
+                            disabled={!newAddressForm.full_address || !newAddressForm.label || !newAddressForm.recipient_name || addAddressMutation.isPending}
+                            className="btn-primary w-full text-sm py-2 bg-blue-600 hover:bg-blue-700"
+                          >
+                           {addAddressMutation.isPending ? 'Menyimpan...' : 'Simpan & Gunakan'}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
-                <button 
-                  onClick={() => orderMutation.mutate({ 
-                    product_id: selectedProduct.id, 
-                    quantity, 
-                    notes: `[Alamat Pengiriman]: ${address}\n\n[Catatan]: ${notes}` 
-                  })}
-                  disabled={orderMutation.isPending || !address.trim() || quantity < selectedProduct.min_order || quantity > selectedProduct.stock_quantity}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {orderMutation.isPending ? 'Memproses...' : 'Beli Sekarang'}
-                </button>
+
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-500">Total Pembayaran</div>
+                    <div className="text-xl font-black text-green-700">
+                      Rp{(selectedProduct.price_per_unit * quantity).toLocaleString('id-ID')}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                        let finalAddressPayload = "";
+                        if (selectedAddressId) {
+                            const sel = addressData?.find((a: any) => a.id === selectedAddressId);
+                            if (sel) finalAddressPayload = `ALAMAT_SISTEM:[${sel.id}] ${sel.label} - ${sel.recipient_name} | ${sel.full_address}`;
+                        } else {
+                            alert("Harap pilih atau tambah alamat pengiriman!");
+                            return;
+                        }
+
+                        orderMutation.mutate({ 
+                          product_id: selectedProduct.id, 
+                          quantity, 
+                          notes: `[Alamat]: ${finalAddressPayload}\n\n[Catatan]: ${notes}` 
+                        });
+                    }}
+                    disabled={orderMutation.isPending || showAddressMap || !selectedAddressId || quantity < selectedProduct.min_order || quantity > selectedProduct.stock_quantity}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {orderMutation.isPending ? 'Memproses...' : 'Beli Sekarang'}
+                  </button>
+                </div>
               </div>
 
             </motion.div>

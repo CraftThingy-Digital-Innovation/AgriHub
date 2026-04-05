@@ -128,49 +128,63 @@ export default function MapPicker({ initialLat, initialLng, onLocationSelect }: 
     );
   };
 
+  // Calculate floating component position based on props or defaulting
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
+    <div className="relative h-[300px] w-full rounded-2xl overflow-hidden border-2 border-green-100 shadow-inner group">
+      
+      {/* Floating Search Bar */}
+      <div className="absolute top-3 left-3 right-3 z-[1000] flex gap-2">
         <button 
-          className="btn-secondary px-3 flex items-center justify-center bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100" 
-          onClick={handleMyLocation} 
+          className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-md text-blue-600 hover:bg-blue-50 transition border border-transparent hover:border-blue-200" 
+          onClick={(e) => { e.preventDefault(); handleMyLocation(); }} 
           disabled={loading}
           title="Lokasi Saat Ini"
         >
           <MapPin size={20} />
         </button>
-        <input 
-          type="text" 
-          className="input-field flex-1" 
-          placeholder="Cari lokasi (Jalan, Kota, atau Gedung)..." 
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-        />
-        <button className="btn-primary px-4 bg-green-600" onClick={handleSearch} disabled={loading}>
-          {loading ? '⏳' : 'Cari'}
-        </button>
+        <div className="flex-1 flex bg-white/90 backdrop-blur-sm rounded-xl shadow-md overflow-hidden border border-transparent focus-within:border-green-400 transition">
+          <input 
+            type="text" 
+            className="w-full bg-transparent px-4 py-2 text-sm text-slate-700 focus:outline-none" 
+            placeholder="Cari lokasi bangunan, kota, atau jalan..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button 
+            type="button"
+            className="px-4 font-bold text-sm bg-green-600 text-white hover:bg-green-700 transition" 
+            onClick={(e) => { e.preventDefault(); handleSearch(); }} 
+            disabled={loading}
+          >
+            {loading ? '⏳' : 'CARI'}
+          </button>
+        </div>
       </div>
 
-      <div className="h-[300px] w-full rounded-2xl overflow-hidden border-2 border-green-100 shadow-inner relative z-10">
-        <MapContainer center={pos} zoom={13} style={{ height: '100%', width: '100%' }}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={pos} />
-          <MapEventsHandler onMapClick={handlePositionChange} />
-          <ChangeView center={pos} />
-        </MapContainer>
-        {loading && (
-          <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-[1000] flex items-center justify-center font-bold text-green-700">
-            Mengambil data lokasi...
-          </div>
-        )}
+      <MapContainer center={pos} zoom={13} style={{ height: '100%', width: '100%', zIndex: 10 }}>
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={pos} />
+        <MapEventsHandler onMapClick={handlePositionChange} />
+        <ChangeView center={pos} />
+      </MapContainer>
+
+      {/* Floating Status / Tip Overlay */}
+      <div className="absolute bottom-3 left-0 right-0 z-[1000] pointer-events-none flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="bg-slate-900/70 backdrop-blur-md text-white text-[10px] px-3 py-1.5 rounded-full font-medium">
+          Klik manapun pada peta untuk memindahkan pin
+        </div>
       </div>
-      <p className="text-[10px] text-green-500 italic">
-        * Klik pada peta untuk memindahkan pin ke lokasi yang lebih presisi.
-      </p>
+
+      {loading && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-[2000] flex flex-col items-center justify-center font-bold text-green-700 gap-3">
+          <div className="w-8 h-8 rounded-full border-4 border-green-200 border-t-green-600 animate-spin"></div>
+          <span className="bg-white/80 px-3 py-1 rounded-full shadow-sm text-sm">Menyelaraskan koordinat satelit...</span>
+        </div>
+      )}
     </div>
   );
 }

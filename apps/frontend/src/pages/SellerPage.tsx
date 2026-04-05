@@ -251,13 +251,25 @@ export default function SellerPage() {
                     ...f,
                     latitude: loc.lat,
                     longitude: loc.lng,
-                    address: loc.address,
+                    address: loc.address, // auto-fill first time
                     provinsi: loc.province || '',
                     kabupaten: loc.kabupaten || loc.city || '',
                     kecamatan: loc.kecamatan || '',
                     postal_code: loc.postalCode || ''
                   }))
                 } />
+
+                {storeForm.latitude && (
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold text-slate-700">Detail Alamat Lengkap (Bisa Diedit)</label>
+                    <textarea 
+                      className="input-field min-h-[80px]" 
+                      placeholder="Contoh: Jl. Sudirman No 15 (Pagar Hitam Depan Indomaret)"
+                      value={storeForm.address || ''}
+                      onChange={e => setStoreForm(f => ({ ...f, address: e.target.value }))}
+                    />
+                  </div>
+                )}
 
                 <button
                   onClick={() => registerMutation.mutate(storeForm)}
