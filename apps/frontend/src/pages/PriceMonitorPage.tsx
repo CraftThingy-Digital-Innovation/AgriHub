@@ -200,66 +200,22 @@ export default function PriceMonitorPage() {
         </div>
 
         {/* 🔹 RIGHT CARD */}
-        <div className="card">
-
-          <h2 className="font-semibold text-green-900 mb-4 flex items-center gap-2">
-            <ClipboardEdit size={18} className="text-green-600" />
-            Lapor Harga Pasar
+        <div className="card bg-green-50/50 flex flex-col justify-center items-center text-center p-8 border border-green-100">
+          <div className="bg-green-100 p-4 rounded-full mb-4">
+            <BarChart3 className="text-green-700 w-8 h-8" />
+          </div>
+          <h2 className="font-bold text-lg text-green-900 mb-2">
+            Otomatisasi Harga AgriHub
           </h2>
-
-          <ReportPriceForm
-            komoditasList={komoditasList}
-            onSubmit={(data) => reportMutation.mutate(data)}
-            loading={reportMutation.isPending}
-          />
+          <p className="text-sm text-green-700 leading-relaxed max-w-sm">
+            Harga lokal AgriHub langsung dikalkulasi mendengarkan setiap <b>transaksi riil</b> 
+            dan penawaran aktif di Marketplace secara waktu-nyata.
+            <br/><br/>
+            Jadilah bagian dari transparansi pangan: <b>Mulailah bertransaksi di AgriHub!</b>
+          </p>
         </div>
 
       </div>
-    </div>
-  );
-}
-
-function ReportPriceForm({
-  komoditasList,
-  onSubmit,
-  loading
-}: {
-  komoditasList: KomoditasItem[];
-  onSubmit: (d: Record<string, unknown>) => void;
-  loading: boolean;
-}) {
-  const [form, setForm] = useState({
-    komoditas_id: '',
-    price_per_kg: '',
-    kabupaten: '',
-    provinsi: ''
-  });
-
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
-
-  return (
-    <div className="space-y-3">
-
-      <select className="input-field text-sm" value={form.komoditas_id} onChange={set('komoditas_id')}>
-        <option value="">Pilih komoditas</option>
-        {komoditasList.map(k => (
-          <option key={k.id} value={k.id}>{k.nama}</option>
-        ))}
-      </select>
-
-      <input className="input-field text-sm" placeholder="Harga per kg" type="number" value={form.price_per_kg} onChange={set('price_per_kg')} />
-      <input className="input-field text-sm" placeholder="Kabupaten" value={form.kabupaten} onChange={set('kabupaten')} />
-      <input className="input-field text-sm" placeholder="Provinsi" value={form.provinsi} onChange={set('provinsi')} />
-
-      <button
-        onClick={() => onSubmit({ ...form, price_per_kg: Number(form.price_per_kg) })}
-        className="btn-primary w-full justify-center"
-        disabled={loading || !form.komoditas_id}
-      >
-        {loading ? 'Loading...' : 'Simpan'}
-      </button>
-
     </div>
   );
 }

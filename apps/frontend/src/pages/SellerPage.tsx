@@ -564,13 +564,29 @@ export default function SellerPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                        <select className="input-field w-full" value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori / Jenis Pangan</label>
+                        <select 
+                            className="input-field w-full mb-2" 
+                            value={['sayuran', 'buah', 'palawija', ''].includes(productForm.category) ? (productForm.category || 'sayuran') : 'lainnya'} 
+                            onChange={e => {
+                                if (e.target.value !== 'lainnya') setProductForm({...productForm, category: e.target.value});
+                                else setProductForm({...productForm, category: 'Lainnya: '});
+                            }}
+                        >
                             <option value="sayuran">Sayuran</option>
                             <option value="buah">Buah-buahan</option>
                             <option value="palawija">Palawija</option>
-                            <option value="lainnya">Lainnya</option>
+                            <option value="lainnya">Lainnya (Ketik Sendiri)</option>
                         </select>
+                        {!['sayuran', 'buah', 'palawija', ''].includes(productForm.category) && (
+                            <input
+                                autoFocus
+                                className="input-field w-full"
+                                placeholder="Ketik jenis pangan (misal: Umbi-umbian)..."
+                                value={productForm.category.replace('Lainnya: ', '')}
+                                onChange={e => setProductForm({...productForm, category: e.target.value})}
+                            />
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Harga *</label>
