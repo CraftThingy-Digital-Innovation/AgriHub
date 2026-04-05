@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useModalStore } from '../store/useModalStore';
 
-type AdminTab = 'dashboard' | 'wa' | 'users' | 'rag' | 'komoditas' | 'migration';
+type AdminTab = 'dashboard' | 'wa' | 'users' | 'rag' | 'komoditas' | 'migration' | 'settings';
 
 interface User { id: string; name: string; phone: string; role: string; is_verified: number; created_at: string; }
 interface RagDoc { id: string; title: string; source_type: string; is_global: number; chunk_count: number; created_at: string; }
@@ -25,6 +25,7 @@ const TABS: { key: AdminTab; label: string; icon: React.ElementType }[] = [
   { key: 'rag', label: 'Dokumen AI', icon: BrainCircuit },
   { key: 'komoditas', label: 'Komoditas', icon: Sprout },
   { key: 'migration', label: 'Migrasi DB', icon: Database },
+  { key: 'settings', label: 'Pengaturan', icon: Settings },
 ];
 
 export default function AdminPage() {
@@ -79,6 +80,7 @@ export default function AdminPage() {
           {tab === 'rag' && <RagTab qc={qc} />}
           {tab === 'komoditas' && <KomoditasTab qc={qc} />}
           {tab === 'migration' && <MigrationTab />}
+          {tab === 'settings' && <SettingsPanel />}
         </motion.div>
       </AnimatePresence>
     </div>
@@ -86,8 +88,9 @@ export default function AdminPage() {
 }
 
 // ─── Reusable Card Component ────────────────────────────────────────────────
-const Card = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
+const Card = ({ children, className = '', title }: { children: React.ReactNode; className?: string; title?: string }) => (
   <div className={`bg-white rounded-2xl border border-gray-200 shadow-sm p-6 ${className}`}>
+    {title && <h3 className="font-bold text-gray-800 mb-4">{title}</h3>}
     {children}
   </div>
 );
@@ -662,5 +665,111 @@ function MigrationTab() {
         </div>
       )}
     </Card>
+  );
+}
+
+// ─── Settings Panel ──────────────────────────────────────────────────────────
+function SettingsPanel() {
+  const qc = useQueryClient();
+  const { showAlert, showConfirm } = useModalStore();
+  const [testEmail, setTestEmail] = useState('');
+  const [localSettings, setLocalSettings] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
+
+  type SettingRow = { key: string; value: string; description: string; group: string; is_secret: boolean };
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: (): Promise<SettingRow[]> => api.get('/admin/settings').then(r => r.data.data),
+  });
+
+  // Sync settings ke local state setelah data berhasil di-fetch
+  useEffect(() => {
+    if (data && Object.keys(localSettings).length === 0) {
+      const map: Record<string, string> = {};
+      data.forEach((s: SettingRow) => { map[s.key] = s.value || ''; });
+      setLocalSettings(map);
+    }
+  }, [data]);
+
+  const saveMutation = useMutation({
+    mutationFn: (updates: Record<string, string>) => api.patch('/admin/settings', updates),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); showAlert('✅ Pengaturan berhasil disimpan!'); setDirty(false); },
+    onError: () => showAlert('❌ Gagal menyimpan pengaturan'),
+  });
+
+  const testMutation = useMutation({
+    mutationFn: () => api.post('/admin/settings/test-smtp', { email: testEmail }),
+    onSuccess: (r) => showAlert(`✅ ${r.data.message}`),
+    onError: (e: any) => showAlert(`❌ ${e.response?.data?.error || 'Gagal kirim test email. Pastikan SMTP sudah dikonfigurasi.'}`),
+  });
+
+  const setSetting = (key: string, value: string) => {
+    setLocalSettings(prev => ({ ...prev, [key]: value }));
+    setDirty(true);
+  };
+
+  const groups = data ? [...new Set(data.map((s) => s.group))] : [];
+  const groupLabels: Record<string, string> = { smtp: '📧 Konfigurasi SMTP Email', general: '⚙️ Pengaturan Umum' };
+
+  if (isLoading) return <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto" /></div>;
+
+  return (
+    <div className="space-y-6">
+      {groups.map(group => (
+        <Card key={group} title={groupLabels[group] || group}>
+          <div className="space-y-4">
+            {data?.filter((s: any) => s.group === group).map((s: any) => (
+              <div key={s.key}>
+                <label className="text-xs font-bold text-gray-600 block mb-1">
+                  {s.description}
+                  {s.is_secret && <span className="ml-2 text-amber-500 text-[10px]">🔒 Secret</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type={s.is_secret ? 'password' : 'text'}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none text-sm font-mono transition-all"
+                    value={localSettings[s.key] ?? ''}
+                    placeholder={s.is_secret ? '(tetap kosong jika tidak diubah)' : ''}
+                    onChange={e => setSetting(s.key, e.target.value)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+
+      {/* SMTP Test */}
+      <Card title="🧪 Test Pengiriman Email">
+        <div className="flex gap-3">
+          <input
+            type="email"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 outline-none text-sm"
+            placeholder="email@contoh.com"
+            value={testEmail}
+            onChange={e => setTestEmail(e.target.value)}
+          />
+          <button onClick={() => testMutation.mutate()} disabled={!testEmail || testMutation.isPending}
+            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2">
+            {testMutation.isPending ? <RefreshCw size={14} className="animate-spin" /> : null}
+            Kirim Test
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-2">Pastikan SMTP sudah dikonfigurasi dan disimpan sebelum test.</p>
+      </Card>
+
+      {/* Save button */}
+      {dirty && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="sticky bottom-4 flex justify-end">
+          <button onClick={() => saveMutation.mutate(localSettings)}
+            disabled={saveMutation.isPending}
+            className="px-6 py-3 bg-green-600 text-white rounded-2xl font-bold shadow-xl hover:bg-green-700 transition flex items-center gap-2">
+            {saveMutation.isPending ? <RefreshCw size={16} className="animate-spin" /> : null}
+            💾 Simpan Pengaturan
+          </button>
+        </motion.div>
+      )}
+    </div>
   );
 }

@@ -55,9 +55,9 @@ Seed data: 100+ jenis tanaman Indonesia dengan info dasar.
 auth.ts (Puter OAuth + JWT), errorHandler.ts, upload.ts (multer).
 
 #### [NEW] src/routes/
-- `auth.ts` — login, logout, profile
-- `products.ts` — CRUD marketplace
-- `orders.ts` — buat order, status
+- `auth.ts` — login, logout, profile (Enhanced: identifier-based login, Puter OAuth, magic links)
+- `products.ts` — CRUD marketplace (Updated: includes store_postal_code)
+- `orders.ts` — buat order, status (Updated: includes shipping_fee, courier, service)
 - `escrow.ts` — hold, release, dispute
 - `wallet.ts` — saldo, withdraw
 - `rag.ts` — upload dokumen, chat AI
@@ -65,7 +65,8 @@ auth.ts (Puter OAuth + JWT), errorHandler.ts, upload.ts (multer).
 - `supply-demand.ts` — input stok/demand, matching
 - `price-monitor.ts` — data harga, prediksi
 - `shipping.ts` — Biteship ongkir, booking, tracking
-- `webhook.ts` — Midtrans webhook
+- `webhook.ts` — Midtrans webhook (Updated: shipping cost line-item handling)
+- `wa_magic_sessions.ts` — [NEW] Handles proof-of-ownership via WA bot magic links
 
 #### [NEW] src/services/
 - `ragService.ts` — Puter.js AI + embedding + retrieval

@@ -1,249 +1,590 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
-import logo from '../assets/agrihub-logo.png'; // Menggunakan logo agrihub
+import logo from '../assets/agrihub-logo.png';
 import api from '../lib/api';
-import { Phone, Lock, User, ArrowRight, ChevronLeft } from 'lucide-react'; // Tambahkan lucide-react untuk ikon
+import {
+  Phone, Lock, User, AtSign, Mail, ArrowRight, ChevronLeft,
+  Eye, EyeOff, CheckCircle2, XCircle, Loader2, AlertCircle, Shield
+} from 'lucide-react';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type FlowStep =
+  | 'identifier'    // Step 1: Masuk identifier
+  | 'password'      // Step 2: Login — isi password
+  | 'register'      // Step 2: Register — isi semua data
+  | 'otp'           // Step 3: Verifikasi OTP WA
+  | 'puter_profile' // Step setelah Puter: isi phone + password
+  | 'success';
+
+interface FormState {
+  identifier: string;
+  name: string; username: string; email: string;
+  password: string; retypePassword: string;
+  otp: string; phone: string;
+}
+
+// ─── Password strength utils ──────────────────────────────────────────────────
+const rules = [
+  { label: 'Minimal 8 karakter', test: (p: string) => p.length >= 8 },
+  { label: 'Huruf kapital (A-Z)', test: (p: string) => /[A-Z]/.test(p) },
+  { label: 'Huruf kecil (a-z)',   test: (p: string) => /[a-z]/.test(p) },
+  { label: 'Angka (0-9)',         test: (p: string) => /\d/.test(p) },
+  { label: 'Karakter spesial (!@#$…)', test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+];
+
+function PasswordStrength({ password }: { password: string }) {
+  if (!password) return null;
+  const passed = rules.filter(r => r.test(password)).length;
+  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a'];
+  return (
+    <div className="mt-2 space-y-1.5">
+      <div className="flex gap-1">
+        {rules.map((_, i) => (
+          <div key={i} className="h-1 flex-1 rounded-full transition-all duration-300"
+            style={{ background: i < passed ? colors[Math.min(passed - 1, 4)] : '#e5e7eb' }} />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-0.5">
+        {rules.map((r, i) => (
+          <div key={i} className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${r.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+            {r.test(password) ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+            {r.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Password Input ───────────────────────────────────────────────────────────
+function PasswordInput({ value, onChange, placeholder, id, label }: {
+  value: string; onChange: (v: string) => void;
+  placeholder?: string; id: string; label: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="space-y-1">
+      <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">{label}</label>
+      <div className="relative group">
+        <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Lock size={18} /></div>
+        <input
+          id={id}
+          type={show ? 'text' : 'password'}
+          className="w-full pl-12 pr-12 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-semibold text-green-900"
+          placeholder={placeholder || 'Min. 8 karakter, huruf besar, angka, spesial'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          required
+        />
+        <button type="button" onClick={() => setShow(s => !s)}
+          className="absolute inset-y-0 right-4 flex items-center text-green-400 hover:text-green-700 transition-colors">
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<1 | 2>(1);
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [form, setForm] = useState({ phone: '', name: '', password: '', retypePassword: '' });
-  const [exists, setExists] = useState<{ exists: boolean; name?: string } | null>(null);
+  const [step, setStep] = useState<FlowStep>('identifier');
+  const [form, setForm] = useState<FormState>({
+    identifier: '', name: '', username: '', email: '',
+    password: '', retypePassword: '', otp: '', phone: '',
+  });
+  const [accountExists, setAccountExists] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle');
+  const [isPuterFlow, setIsPuterFlow] = useState(false);
+  const { setAuth, updateUser } = useAuthStore();
+  const navigate = useNavigate();
+  const usernameTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f, [key]: e.target.value }));
 
   useEffect(() => {
     const phone = searchParams.get('phone');
-    if (phone) setForm(f => ({ ...f, phone }));
-  }, [searchParams]);
+    if (phone) setForm(f => ({ ...f, identifier: phone }));
+    const mode = searchParams.get('mode');
+    if (mode === 'register') setStep('register');
+  }, []);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { setAuth } = useAuthStore();
-  const navigate = useNavigate();
+  // Redirect jika sudah login
+  useEffect(() => {
+    const token = useAuthStore.getState().token;
+    if (token) navigate('/app', { replace: true });
+  }, []);
 
-  async function handleNextStep(e: React.FormEvent) {
+  // Username realtime check
+  useEffect(() => {
+    if (!form.username || form.username.length < 3) { setUsernameStatus('idle'); return; }
+    setUsernameStatus('checking');
+    clearTimeout(usernameTimer.current);
+    usernameTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await api.get(`/auth/check-username/${form.username}`);
+        setUsernameStatus(data.available ? 'ok' : 'taken');
+      } catch { setUsernameStatus('idle'); }
+    }, 500);
+  }, [form.username]);
+
+  // ── Step 1: Cek identifier ────────────────────────────────────────────────
+  async function handleCheckIdentifier(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.phone) return;
-    setLoading(true);
     setError('');
+    const id = form.identifier.trim();
+    if (!id) return;
+    setLoading(true);
     try {
-      const { data } = await api.get(`/auth/check-phone/${form.phone}`);
-      if (data.success) {
-        setExists({ exists: data.exists, name: data.name });
-        setMode(data.exists ? 'login' : 'register');
-        setStep(2);
+      let exists = false;
+      // Cek apakah identifier adalah nomor HP
+      const isPhone = /^\+?[0-9]{8,15}$/.test(id.replace(/[\s-]/g, ''));
+      if (isPhone) {
+        const { data } = await api.get(`/auth/check-phone/${id}`);
+        exists = data.exists;
+        if (data.exists) { setForm(f => ({ ...f, name: data.name || '' })); }
+      } else {
+        // Username atau email — anggap sudah terdaftar, langsung ke login
+        exists = true;
       }
-    } catch (err) {
-      setError('Gagal mengecek nomor. Coba lagi nanti.');
+      setAccountExists(exists);
+      setStep(exists ? 'password' : 'register');
+    } catch {
+      setError('Gagal memeriksa akun. Coba lagi.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  // ── Step 2: Login ─────────────────────────────────────────────────────────
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (mode === 'register' && form.password !== form.retypePassword) {
-      setError('Password tidak cocok');
-      return;
-    }
-
-    setLoading(true);
     setError('');
+    setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-      const { data } = await api.post(endpoint, form);
+      const { data } = await api.post('/auth/login', {
+        identifier: form.identifier,
+        password: form.password,
+      });
       if (data.success) {
         setAuth(data.data.user, data.data.token);
-        const lid = searchParams.get('lid');
-        const action = searchParams.get('action');
-        let redirectUrl = '/app';
-        if (lid || action) {
-          const params = new URLSearchParams();
-          if (lid) params.set('lid', lid);
-          if (action) params.set('action', action);
-          redirectUrl += `?${params.toString()}`;
-        }
-        navigate(redirectUrl);
+        navigate(getRedirectUrl());
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error || 'Terjadi kesalahan, coba lagi';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.error || 'Login gagal');
+    } finally { setLoading(false); }
   }
 
+  // ── Step 2: Register ──────────────────────────────────────────────────────
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (form.password !== form.retypePassword) { setError('Password tidak cocok'); return; }
+    if (usernameStatus === 'taken') { setError('Username sudah digunakan'); return; }
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/register', {
+        phone: form.identifier.replace(/[\s-]/g, ''),
+        name: form.name,
+        username: form.username || undefined,
+        email: form.email || undefined,
+        password: form.password,
+      });
+      if (data.success) {
+        setAuth(data.data.user, data.data.token);
+        // Kirim OTP untuk verifikasi nomor HP
+        await api.post('/auth/send-phone-otp');
+        setStep('otp');
+        setSuccess('OTP dikirim ke WhatsApp Anda!');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Gagal mendaftar');
+    } finally { setLoading(false); }
+  }
+
+  // ── Step 3: Verifikasi OTP ────────────────────────────────────────────────
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/verify-phone-otp', { otp: form.otp });
+      if (data.success) {
+        updateUser(data.data.user);
+        setStep('success');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'OTP salah atau kadaluarsa');
+    } finally { setLoading(false); }
+  }
+
+  async function handleResendOtp() {
+    setError(''); setSuccess('');
+    try {
+      await api.post('/auth/send-phone-otp');
+      setSuccess('OTP dikirim ulang!');
+    } catch { setError('Gagal kirim OTP'); }
+  }
+
+  // ── Puter OAuth ───────────────────────────────────────────────────────────
+  async function handlePuterLogin() {
+    setError('');
+    setLoading(true);
+    try {
+      const puter = (window as any).puter;
+      if (!puter) throw new Error('Puter SDK tidak tersedia');
+      const puterUser = await puter.auth.signIn();
+      if (!puterUser) throw new Error('Login Puter dibatalkan');
+
+      const puter_token = puterUser.token || puterUser.auth_token;
+      const puter_user_id = puterUser.username || puterUser.uuid;
+      const puter_name = puterUser.username || puterUser.email;
+      const puter_email = puterUser.email;
+      const puter_username = puterUser.username;
+
+      const { data } = await api.post('/auth/login-puter', {
+        puter_token, puter_user_id, puter_name, puter_email, puter_username,
+      });
+
+      if (data.success) {
+        setAuth(data.data.user, data.data.token);
+        if (data.data.needs_phone) {
+          setIsPuterFlow(true);
+          setForm(f => ({ ...f, name: data.data.user.name || '' }));
+          setStep('puter_profile');
+        } else {
+          navigate(getRedirectUrl());
+        }
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Login Puter gagal');
+    } finally { setLoading(false); }
+  }
+
+  // ── Puter Profile Completion (phone + password) ───────────────────────────
+  async function handleCompletePuterProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (form.password && form.password !== form.retypePassword) { setError('Password tidak cocok'); return; }
+    setLoading(true);
+    try {
+      await api.post('/auth/complete-puter-profile', {
+        phone: form.phone.replace(/[\s-]/g, ''),
+        password: form.password || undefined,
+        retype_password: form.retypePassword || undefined,
+      });
+      // OTP sudah dikirim oleh backend
+      setStep('otp');
+      setSuccess('OTP dikirim ke WhatsApp Anda!');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Gagal menyimpan profil');
+    } finally { setLoading(false); }
+  }
+
+  function getRedirectUrl() {
+    const lid = searchParams.get('lid');
+    const action = searchParams.get('action');
+    if (lid || action) {
+      const p = new URLSearchParams();
+      if (lid) p.set('lid', lid);
+      if (action) p.set('action', action);
+      return `/app?${p.toString()}`;
+    }
+    return '/app';
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f0fdf4] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Dekorasi Background */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-200 rounded-full blur-[120px] opacity-50" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-300 rounded-full blur-[120px] opacity-50" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10">
         <div className="bg-white/80 backdrop-blur-xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-8 md:p-10">
-          {/* Logo & Header */}
+
+          {/* Logo */}
           <div className="text-center mb-8">
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md p-2"
-            >
+            <motion.div whileHover={{ scale: 1.05 }}
+              className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md p-2">
               <img src={logo} alt="AgriHub Logo" className="w-full h-full object-contain" />
             </motion.div>
             <h1 className="text-3xl font-black text-green-950 tracking-tight">AgriHub</h1>
             <p className="text-green-700 font-medium text-sm">Ketahanan Pangan Digital</p>
           </div>
 
-          <form onSubmit={step === 1 ? handleNextStep : handleSubmit} className="space-y-5">
-            <AnimatePresence mode="wait">
-              {step === 1 ? (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-5"
-                >
+          <AnimatePresence mode="wait">
+
+            {/* ── STEP: identifier ──────────────────────────────────────── */}
+            {step === 'identifier' && (
+              <motion.div key="identifier" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleCheckIdentifier} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Nomor WhatsApp</label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-4 flex items-center text-green-600">
-                        <Phone size={18} />
-                      </div>
-                      <input
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-300 font-bold text-green-900"
-                        placeholder="08xxxxxxxxxx"
-                        type="tel"
-                        value={form.phone}
-                        onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                        required
-                        autoFocus
-                      />
-                    </div>
-                    <div className="flex items-start gap-2 px-1">
-                       <span className="text-[11px] leading-relaxed text-green-600 italic">
-                         *Gunakan nomor WhatsApp aktif untuk menerima notifikasi otomatis.
-                       </span>
+                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">
+                      Nomor HP, Username, atau Email
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Phone size={18} /></div>
+                      <input id="login-identifier"
+                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-green-900"
+                        placeholder="08xxxxxxxx / @username / email"
+                        value={form.identifier}
+                        onChange={set('identifier')}
+                        required autoFocus />
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-[0_10px_20px_rgba(22,163,74,0.3)] hover:bg-green-700 hover:shadow-none active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 group"
-                  >
-                    {loading ? '⏳ Mengecek...' : (
-                      <>
-                        Lanjutkan 
-                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                      </>
+                  {error && <p className="text-red-500 text-[11px] font-bold">{error}</p>}
+
+                  <button type="submit" id="btn-check-identifier" disabled={loading}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-[0_10px_20px_rgba(22,163,74,0.3)] hover:bg-green-700 transition-all flex items-center justify-center gap-2 group">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : (
+                      <>Lanjutkan <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
                     )}
                   </button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-4"
-                >
-                  {/* Akun Status Card */}
-                  <div className="bg-green-50/80 border border-green-100 p-4 rounded-2xl flex justify-between items-center mb-6">
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3">
+                    <hr className="flex-1 border-green-100" />
+                    <span className="text-xs text-green-400 font-bold">atau</span>
+                    <hr className="flex-1 border-green-100" />
+                  </div>
+
+                  {/* Puter Login */}
+                  <button type="button" id="btn-puter-login" onClick={handlePuterLogin} disabled={loading}
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl font-bold text-sm hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg">
+                    <Shield size={18} />
+                    Masuk / Daftar dengan Puter.com
+                  </button>
+                  <p className="text-[10px] text-center text-gray-400">
+                    Login Puter otomatis membuat akun AgriHub Anda jika belum ada.
+                  </p>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: password (login) ────────────────────────────────── */}
+            {step === 'password' && (
+              <motion.div key="password" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleLogin} className="space-y-5">
+                  {/* Status card */}
+                  <div className="bg-green-50 border border-green-100 p-3 rounded-2xl flex justify-between items-center">
                     <div>
-                      <p className="text-[9px] font-black text-green-600 uppercase tracking-tighter">Status Akun</p>
-                      <p className="text-sm font-bold text-green-900 truncate max-w-[150px]">
-                        {exists?.exists ? exists.name : 'Anggota Baru'}
-                      </p>
+                      <p className="text-[9px] font-black text-green-600 uppercase">Masuk sebagai</p>
+                      <p className="text-sm font-bold text-green-900 truncate max-w-[160px]">{form.name || form.identifier}</p>
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={() => setStep(1)} 
-                      className="text-[10px] bg-white border border-green-200 text-green-700 font-bold px-3 py-1.5 rounded-xl hover:bg-green-50 transition-colors flex items-center gap-1"
-                    >
-                      <ChevronLeft size={12} /> Ubah Nomor
+                    <button type="button" onClick={() => { setStep('identifier'); setError(''); }}
+                      className="text-[10px] bg-white border border-green-200 text-green-700 font-bold px-3 py-1.5 rounded-xl hover:bg-green-50 flex items-center gap-1">
+                      <ChevronLeft size={12} /> Ubah
                     </button>
                   </div>
 
-                  {!exists?.exists && (
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Nama Lengkap</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><User size={18} /></div>
-                        <input
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 outline-none transition-all font-bold text-green-900"
-                          placeholder="Nama lengkap Anda"
-                          value={form.name}
-                          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                          required
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <PasswordInput id="login-password" label="Password" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} />
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Password</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Lock size={18} /></div>
-                      <input
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 outline-none transition-all font-bold text-green-900"
-                        placeholder="Min. 8 karakter"
-                        type="password"
-                        value={form.password}
-                        onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                        required
-                        minLength={8}
-                        autoFocus
-                      />
+                  {error && <p className="text-red-500 text-[11px] font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
+
+                  <button type="submit" id="btn-login" disabled={loading}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : '🔑 Masuk Sekarang'}
+                  </button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: register ────────────────────────────────────────── */}
+            {(step === 'register' || step === 'puter_profile') && (
+              <motion.div key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={step === 'register' ? handleRegister : handleCompletePuterProfile} className="space-y-4">
+
+                  {/* Header */}
+                  <div className="flex items-center gap-3 pb-1">
+                    {!isPuterFlow && (
+                      <button type="button" onClick={() => { setStep('identifier'); setError(''); }}
+                        className="text-green-600 hover:text-green-800 transition-colors"><ChevronLeft size={20} /></button>
+                    )}
+                    <div>
+                      <p className="font-black text-green-900 text-base">
+                        {isPuterFlow ? '📱 Lengkapi Profil Anda' : '🌾 Daftar Akun Baru'}
+                      </p>
+                      <p className="text-[11px] text-green-600">
+                        {isPuterFlow ? 'Tambahkan nomor WA & password' : `Nomor: ${form.identifier}`}
+                      </p>
                     </div>
                   </div>
 
-                  {mode === 'register' && (
+                  {/* Phone (untuk puter flow) */}
+                  {isPuterFlow && (
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Konfirmasi Password</label>
+                      <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Nomor WhatsApp *</label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Lock size={18} /></div>
-                        <input
+                        <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Phone size={18} /></div>
+                        <input id="puter-phone"
                           className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 outline-none transition-all font-bold text-green-900"
-                          placeholder="Ulangi password"
-                          type="password"
-                          value={form.retypePassword}
-                          onChange={e => setForm(f => ({ ...f, retypePassword: e.target.value }))}
-                          required
-                        />
+                          placeholder="08xxxxxxxxxx"
+                          type="tel"
+                          value={form.phone}
+                          onChange={set('phone')}
+                          required />
                       </div>
                     </div>
                   )}
 
-                  {error && (
-                    <div className="bg-red-50 text-red-600 text-[11px] font-bold text-center py-3 rounded-xl border border-red-100 animate-pulse">
-                      ⚠️ {error}
+                  {/* Nama */}
+                  {!isPuterFlow && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Nama Lengkap *</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><User size={18} /></div>
+                        <input id="reg-name"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 outline-none transition-all font-bold text-green-900"
+                          placeholder="Nama lengkap Anda"
+                          value={form.name}
+                          onChange={set('name')}
+                          required />
+                      </div>
                     </div>
                   )}
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2"
-                  >
-                    {loading ? '⏳ Memproses...' : (
-                      <>
-                        <img src={logo} className="w-5 h-5 brightness-0 invert" alt="" />
-                        {exists?.exists ? 'Masuk Sekarang' : 'Daftar Sekarang'}
-                      </>
+                  {/* Username */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">
+                      Username <span className="text-gray-400">(opsional, unik)</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><AtSign size={18} /></div>
+                      <input id="reg-username"
+                        className={`w-full pl-12 pr-10 py-4 rounded-2xl bg-green-50/50 border outline-none transition-all font-bold text-green-900
+                          ${usernameStatus === 'ok' ? 'border-green-500 focus:ring-4 focus:ring-green-500/10' :
+                            usernameStatus === 'taken' ? 'border-red-400 focus:ring-4 focus:ring-red-500/10' : 'border-green-100 focus:border-green-500 focus:ring-4 focus:ring-green-500/10'}`}
+                        placeholder="contoh: petani_andi (3-30 karakter)"
+                        value={form.username}
+                        onChange={set('username')} />
+                      <div className="absolute inset-y-0 right-4 flex items-center">
+                        {usernameStatus === 'checking' && <Loader2 size={16} className="text-gray-400 animate-spin" />}
+                        {usernameStatus === 'ok' && <CheckCircle2 size={16} className="text-green-500" />}
+                        {usernameStatus === 'taken' && <XCircle size={16} className="text-red-500" />}
+                      </div>
+                    </div>
+                    {usernameStatus === 'taken' && <p className="text-[11px] text-red-500 ml-1">Username sudah digunakan</p>}
+                    {usernameStatus === 'ok' && <p className="text-[11px] text-green-600 ml-1">Username tersedia ✓</p>}
+                  </div>
+
+                  {/* Email */}
+                  {!isPuterFlow && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">
+                        Email <span className="text-gray-400">(opsional, untuk verifikasi)</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Mail size={18} /></div>
+                        <input id="reg-email" type="email"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-green-900"
+                          placeholder="email@contoh.com"
+                          value={form.email}
+                          onChange={set('email')} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Password */}
+                  <PasswordInput id="reg-password" label="Password *" value={form.password}
+                    onChange={v => setForm(f => ({ ...f, password: v }))} />
+                  <PasswordStrength password={form.password} />
+
+                  <PasswordInput id="reg-retype-password" label="Konfirmasi Password *"
+                    placeholder="Ulangi password yang sama"
+                    value={form.retypePassword}
+                    onChange={v => setForm(f => ({ ...f, retypePassword: v }))} />
+                  {form.retypePassword && form.password !== form.retypePassword && (
+                    <p className="text-[11px] text-red-500 flex items-center gap-1 ml-1">
+                      <AlertCircle size={12} /> Password tidak cocok
+                    </p>
+                  )}
+                  {form.retypePassword && form.password === form.retypePassword && form.retypePassword.length > 0 && (
+                    <p className="text-[11px] text-green-600 flex items-center gap-1 ml-1">
+                      <CheckCircle2 size={12} /> Password cocok ✓
+                    </p>
+                  )}
+
+                  {error && <p className="text-red-500 text-[11px] font-bold bg-red-50 p-3 rounded-xl flex gap-2"><AlertCircle size={14} />{error}</p>}
+
+                  <button type="submit" id="btn-register" disabled={loading || usernameStatus === 'taken'}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : (
+                      isPuterFlow ? '📱 Simpan & Verifikasi WA' : '🌾 Daftar & Verifikasi WA'
                     )}
                   </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </form>
+                </form>
+              </motion.div>
+            )}
 
-          <div className="mt-8 text-center">
+            {/* ── STEP: OTP verification ────────────────────────────────── */}
+            {step === 'otp' && (
+              <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <form onSubmit={handleVerifyOtp} className="space-y-5">
+                  <div className="text-center space-y-2">
+                    <div className="text-5xl">💬</div>
+                    <h2 className="font-black text-green-900 text-lg">Verifikasi WhatsApp</h2>
+                    <p className="text-sm text-green-600">
+                      Kode OTP 6-digit dikirim ke WhatsApp Anda. Masukkan kode di bawah ini.
+                    </p>
+                  </div>
+
+                  {success && <div className="bg-green-50 text-green-700 text-[11px] font-bold p-3 rounded-xl text-center border border-green-100">{success}</div>}
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Kode OTP (6 Digit)</label>
+                    <input id="otp-input"
+                      className="w-full px-4 py-4 rounded-2xl bg-green-50/50 border border-green-100 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-black text-green-900 text-center text-2xl tracking-[0.5em]"
+                      placeholder="• • • • • •"
+                      value={form.otp}
+                      onChange={set('otp')}
+                      maxLength={6}
+                      inputMode="numeric"
+                      required autoFocus />
+                  </div>
+
+                  {error && <p className="text-red-500 text-[11px] font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
+
+                  <button type="submit" id="btn-verify-otp" disabled={loading || form.otp.length !== 6}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : '✅ Verifikasi Sekarang'}
+                  </button>
+
+                  <button type="button" onClick={handleResendOtp}
+                    className="w-full text-green-600 font-bold text-sm hover:underline">
+                    Kirim Ulang OTP
+                  </button>
+                </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: success ─────────────────────────────────────────── */}
+            {step === 'success' && (
+              <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="text-center space-y-5 py-4">
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}
+                  className="text-6xl">🎉</motion.div>
+                <div>
+                  <h2 className="font-black text-green-900 text-xl">Selamat Datang!</h2>
+                  <p className="text-green-600 text-sm mt-1">Nomor WA berhasil diverifikasi. Akun siap digunakan!</p>
+                </div>
+                <button id="btn-go-app" onClick={() => navigate(getRedirectUrl())}
+                  className="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-green-700 transition-all">
+                  Masuk ke AgriHub 🌾
+                </button>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+
+          <div className="mt-6 text-center">
             <Link to="/" className="text-xs text-gray-400 hover:text-green-700 font-bold transition-colors">
               ← Kembali ke Beranda
             </Link>

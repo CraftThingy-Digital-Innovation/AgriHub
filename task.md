@@ -42,6 +42,24 @@
 - [x] `chore: initialize AgriHub Indonesia monorepo structure`
 - [x] `feat(server): Express + Knex + SQLite + JWT + seeds 100+ tanaman`
 
+## Sprint 1.5: Enhanced Auth & Shipping (Lost History Restored)
+
+### Auth System (from bd0c1a31)
+- [x] Push root git
+- [x] Migration 014: username, email_verified, phone_verified, OTP columns
+- [x] Migration 015: app_settings table (SMTP config)
+- [x] emailService.ts (Nodemailer, config from DB)
+- [x] Upgrade auth.ts routes (register, login, login-puter, OTP endpoints)
+- [x] Upgrade admin.ts (SMTP settings CRUD)
+- [x] Complete LoginPage.tsx rewrite (Puter OAuth, username, email, phone OTP, password show/hide, strength)
+- [x] Upgrade AdminPage.tsx (SMTP settings section)
+
+### Marketplace Shipping (from 437e2476)
+- [x] Implement real-time shipping cost in checkout modal
+- [x] Integration with Biteship API (postal code based)
+- [x] Update orders table with shipping_fee
+- [x] Midtrans line-item for shipping fee
+
 ## Sprint 2 (S2): RAG & AI Chat (Minggu 3-4)
 
 ### RAG Engine (Server)
