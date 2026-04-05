@@ -17,6 +17,7 @@ interface MapData {
 
 interface NationalPriceMapProps {
   data: MapData[];
+  selectedProvince?: string;
   onProvinceClick?: (province: string) => void;
 }
 
@@ -34,8 +35,10 @@ const normalizeProvName = (name: string) => {
     .replace('KOTA ', '');
 };
 
-const NationalPriceMap: React.FC<NationalPriceMapProps> = ({ data, onProvinceClick }) => {
+const NationalPriceMap: React.FC<NationalPriceMapProps> = ({ data, selectedProvince, onProvinceClick }) => {
   const [geoData, setGeoData] = useState<any>(null);
+  const [tooltipContent, setTooltipContent] = useState("");
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   // Map the prov name to their price
   const priceMap = useMemo(() => {
@@ -59,51 +62,77 @@ const NationalPriceMap: React.FC<NationalPriceMapProps> = ({ data, onProvinceCli
          </h2>
       </div>
       
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{
-          scale: 1200,
-          center: [118, -2], // Center on Indonesia
+      <div 
+        className="relative w-full h-[400px]"
+        onMouseMove={(e) => {
+           // Track mouse for tooltip, offset slightly to not block cursor
+           setTooltipPos({ x: e.clientX + 15, y: e.clientY - 20 });
         }}
-        width={1000}
-        height={400}
-        style={{ width: "100%", height: "auto" }}
       >
-        <ZoomableGroup zoom={1}>
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const mapProvName = normalizeProvName(geo.properties.state || geo.properties.Propinsi || "");
-                const currentPrice = priceMap[mapProvName];
-                
-                // Color formatting
-                let fillColor = "#D6EAF8"; // Default (No Data)
-                if (currentPrice) {
-                    fillColor = colorScale(currentPrice) as string;
-                }
+        <ComposableMap
+          projection="geoMercator"
+          projectionConfig={{
+            scale: 1200,
+            center: [118, -2], // Center on Indonesia
+          }}
+          width={1000}
+          height={400}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <ZoomableGroup zoom={1}>
+            <Geographies geography={geoUrl}>
+              {({ geographies }) =>
+                geographies.map((geo) => {
+                  const mapProvName = normalizeProvName(geo.properties.state || geo.properties.Propinsi || "");
+                  const currentPrice = priceMap[mapProvName];
+                  
+                  // Color formatting
+                  let fillColor = "#D6EAF8"; // Default (No Data)
+                  if (currentPrice) {
+                      fillColor = colorScale(currentPrice) as string;
+                  }
 
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill={fillColor}
-                    stroke="#183a5e"
-                    strokeWidth={0.5}
-                    style={{
-                      default: { outline: "none" },
-                      hover: { fill: "#FFFFFF", opacity: 0.8, outline: "none", cursor: 'pointer' },
-                      pressed: { outline: "none" },
-                    }}
-                    onClick={() => {
-                        if (onProvinceClick) onProvinceClick(mapProvName);
-                    }}
-                  />
-                );
-              })
-            }
-          </Geographies>
-        </ZoomableGroup>
-      </ComposableMap>
+                  const isSelected = selectedProvince && selectedProvince.toUpperCase() === mapProvName.toUpperCase();
+
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill={fillColor}
+                      stroke={isSelected ? "#FFF" : "#183a5e"}
+                      strokeWidth={isSelected ? 1.5 : 0.5}
+                      style={{
+                        default: { outline: "none", zIndex: isSelected ? 10 : 1 },
+                        hover: { fill: "#4fa7ff", opacity: 0.9, outline: "none", cursor: 'pointer', zIndex: 20 },
+                        pressed: { outline: "none" },
+                      }}
+                      onMouseEnter={() => {
+                          setTooltipContent(`${mapProvName}: ${currentPrice ? 'Rp ' + currentPrice.toLocaleString('id-ID') : 'Tidak ada data'}`);
+                      }}
+                      onMouseLeave={() => {
+                          setTooltipContent("");
+                      }}
+                      onClick={() => {
+                          if (onProvinceClick) onProvinceClick(mapProvName);
+                      }}
+                    />
+                  );
+                })
+              }
+            </Geographies>
+          </ZoomableGroup>
+        </ComposableMap>
+
+        {/* Global Floating Tooltip */}
+        {tooltipContent && (
+           <div 
+              style={{ top: tooltipPos.y, left: tooltipPos.x, position: 'fixed', zIndex: 9999, pointerEvents: 'none' }}
+              className="bg-gray-900/90 text-white px-3 py-1.5 rounded-lg shadow-xl text-xs font-semibold whitespace-nowrap border border-white/20"
+           >
+              {tooltipContent}
+           </div>
+        )}
+      </div>
 
       {/* Legend Map */}
       <div className="absolute bottom-4 left-4 bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20 text-white text-xs">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -31,8 +31,9 @@ interface PredictedPrice {
 export default function PriceMonitorPage() {
   // ── PIHPS Map filters (plain-text nama komoditas, bukan UUID) ──────────────
   const [selectedPihpsCommodity, setSelectedPihpsCommodity] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState(''); // Akan di-set ke latest date via API
   const [selectedMarketType, setSelectedMarketType] = useState('');
+  const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedProvDetail, setSelectedProvDetail] = useState<{prov: string; price: number} | null>(null);
 
   // ── AgriHub local chart (terpisah untuk prediksi AI) ──────────────────────
@@ -47,6 +48,19 @@ export default function PriceMonitorPage() {
     queryFn: () => api.get('/pihps/commodities').then(r => r.data),
     staleTime: 1000 * 60 * 60,
   });
+
+  // Ambil tanggal max dari data PIHPS untuk default kalender
+  const { data: latestDateData } = useQuery({
+    queryKey: ['pihps-latest-date'],
+    queryFn: () => api.get('/pihps/latest-date').then(r => r.data),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  useEffect(() => {
+    if (latestDateData?.date && !selectedDate) {
+      setSelectedDate(latestDateData.date);
+    }
+  }, [latestDateData, selectedDate]);
 
   // Komoditas AgriHub — untuk chart lokal & prediksi
   const { data: komoditasData } = useQuery({
@@ -142,7 +156,9 @@ export default function PriceMonitorPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <NationalPriceMap
             data={mapDataRaw?.data || []}
+            selectedProvince={selectedProvince}
             onProvinceClick={(prov) => {
+              setSelectedProvince(prov);
               const found = (mapDataRaw?.data || []).find((d: any) =>
                 d.prov_name.toUpperCase().includes(prov)
               );
@@ -209,6 +225,30 @@ export default function PriceMonitorPage() {
               <option value="3">Pasar Grosir</option>
               <option value="4">Pasar Produsen</option>
             </select>
+          </div>
+          <div className="flex-1 min-w-[160px]">
+             <label className="block text-xs font-semibold text-gray-500 mb-1">PROVINSI (PETA)</label>
+             <select
+               className="input-field w-full h-10 text-sm"
+               value={selectedProvince}
+               onChange={e => {
+                  const prov = e.target.value;
+                  setSelectedProvince(prov);
+                  if (prov) {
+                      const found = (mapDataRaw?.data || []).find((d: any) =>
+                        d.prov_name.toUpperCase().includes(prov)
+                      );
+                      setSelectedProvDetail({ prov: prov, price: found ? Number(found.aggregate_price) : 0 });
+                  } else {
+                      setSelectedProvDetail(null);
+                  }
+               }}
+             >
+               <option value="">Seluruh Indonesia / Pilih...</option>
+               {Array.from(new Set((mapDataRaw?.data || []).map((x:any) => x.prov_name.toUpperCase()))).sort().map(p => (
+                  <option key={p as string} value={p as string}>{p as string}</option>
+               ))}
+             </select>
           </div>
         </div>
       </div>
