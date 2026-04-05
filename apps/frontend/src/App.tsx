@@ -12,6 +12,7 @@ import OrdersPage from './pages/OrdersPage';
 import WalletPage from './pages/WalletPage';
 import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
+import WaSetupPage from './pages/WaSetupPage';
 import { GlobalModals } from './components/GlobalModals';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default function App() {
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/wa-setup" element={<WaSetupPage />} />
 
         {/* Protected (Dashboard Layout) */}
         <Route path="/app" element={
