@@ -86,10 +86,7 @@ export default function SellerPage() {
         const buffer = await file.arrayBuffer();
         const ext = file.name.split('.').pop();
         const fileName = `product_${Date.now()}.${ext}`;
-        const filePath = `/AgriHub_Products/${fileName}`;
-        
-        await puter.fs.mkdir('/AgriHub_Products').catch(() => {});
-        await puter.fs.write(filePath, buffer);
+        await puter.fs.write(fileName, buffer);
         
         // Since puter.fs is private to user token unless hosted, 
         // we host it dynamically if possible, or just create a temporary public link.

@@ -8,7 +8,7 @@ import {
 } from 'react-simple-maps';
 import { scaleLinear } from 'd3-scale';
 
-const geoUrl = "https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia.json"; // GeoJSON API
+const geoUrl = "https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-province-simple.json"; // GeoJSON API
 
 interface MapData {
   prov_name: string;
