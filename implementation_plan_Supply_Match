@@ -1,0 +1,72 @@
+# Rencana Implementasi: Wishlist Terpusat & WhatsApp Auto-Checkout
+
+Fitur Supply & Demand (Matching) saat ini menggunakan input manual untuk supply dan kota manual untuk demand. Sesuai dengan instruksi terbaru, kita akan melakukan *overhaul* arsitektur ini agar lebih intuitif dan terhubung langsung dengan katalog nyata (*Products*) serta buku alamat pengguna (*User Addresses*).
+
+## User Review Required
+
+> [!WARNING]
+> **Database Schema Changes**
+> Perubahan ini akan mengubah struktur tabel `demand_requests` dan bagaimana `match_history` bekerja. Data lama pada `supply_reports` akan ditinggalkan karena sekarang kita menggunakan data aktual dari `products`. Apakah setuju untuk membuang ketergantungan pada `supply_reports`?
+
+## Proposed Changes
+
+---
+
+### Phase 1: Database & Backend Logic
+
+#### [NEW] `apps/backend/src/db/migrations/016_refactor_demand_address.ts`
+- Menambahkan kolom `address_id` (merujuk ke `user_addresses`) pada tabel `demand_requests`.
+- Menghapus kewajiban pengisian manual `kota_tujuan` atau menyesuaikannya menjadi data turunan dari alamat.
+
+#### [MODIFY] `apps/backend/src/services/matchingService.ts`
+- Merombak fungsi `runMatchingFor`:
+  - **Match Demand -> Supply**: Sekarang algoritma akan mencari di tabel `products` (dan merelasikan ke `stores`), bukan lagi `supply_reports`. Kriteria: `products.price_per_unit <= demand.harga_max_per_kg` AND `products.stock_quantity >= demand.jumlah_kg`.
+  - **Match Supply -> Demand**: Saat produk baru ditambahkan, sistem akan memindai `demand_requests` aktif dan mencocokannya.
+
+#### [MODIFY] `apps/backend/src/routes/products.ts`
+- Memanggil `matchingService.runMatchingForProduct(product.id)` sesaat setelah *seller* berhasil membuat produk baru (`POST /`), sehingga bisa langsung menginformasikan ke user yang memiliki *Wishlist* senada.
+
+---
+
+### Phase 2: WhatsApp Bot Integration (Notifikasi & Checkout)
+
+#### [MODIFY] `apps/backend/src/services/whatsappBot.ts`
+- Mengembangkan *State Machine* (menggunakan DB `whatsapp_state` atau memori cache `Map` temporer) untuk menangani *flow* konversasional:
+  1. **Notifikasi Match**: Bot mendeteksi ada match baru -> mengirim WA ke *buyer* "Kami menemukan [Nama Produk] seharga [Rp X] yang sesuai dengan Wishlist Anda. Balas *BELI [ID Match]* untuk melanjutkan."
+  2. **Select Courier**: "Masukkan kurir yang tersedia (misal: *KURIR 1* untuk JNE, *KURIR 2* untuk J&T)."
+  3. **Payment**: Generate link Midtrans.
+  4. **Live Tracking Update**: Integrasi dengan layanan webhook untuk *push* notifikasi status ke nomor WA.
+
+#### [NEW] `apps/backend/src/services/whatsappCheckoutService.ts`
+- Modul *helper* khusus memproses logika `BELI -> CEK ONGKIR -> MINTA BAYAR` yang dipanggil dari `whatsappBot.ts`.
+
+---
+
+### Phase 3: Frontend Web Parity
+
+#### [MODIFY] `apps/frontend/src/pages/MatchingPage.tsx`
+- Mengubah UI "Supply vs Demand" menjadi **Wishlist Saya**.
+- Menghilangkan *tab* "Supply Saya" (karena supply otomatis dari *Seller Dashboard / Products*).
+- Menambahkan *Dropdown/Radio* pemilih alamat pengiriman yang menarik data dari menu *Address Book*.
+
+#### [MODIFY] `apps/frontend/src/pages/OrdersPage.tsx`
+- Memastikan tombol *"Diterima / Selesai"* men-*trigger* pelepasan dana *escrow*, yang juga harus bisa diselesaikan lewat WA (`TERIMA [OrderID]`).
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. Terkait *Notifikasi WhatsApp*, apakah kita ingin bot secara otomatis melakukan *spam* setiap kali ada produk baru yang sesuai, atau dikumpulkan terlebih dahulu sebagai *digest* harian/mingguan?
+> 2. Untuk checkout via WA, apakah user harus selalu mencentang opsi "Pilih Kurir" satu persatu setiap pesan, atau bot bisa secara default memilihkan *Biteship Best Price* jika user mengizinkan?
+
+## Verification Plan
+
+### Automated Tests
+- Menjalankan migrasi `016` tanpa merusak tabel existing.
+- Uji *API Endpoint* baru untuk *Wishlist*.
+
+### Manual Verification
+1. [ ] Login sebagai *Consumer*, buat Wishlist (Demand) Cabai 10kg, max harga Rp 50.000 dengan alamat A.
+2. [ ] Login sebagai *Petani*, buat produk baru (Supply) Cabai 15kg, harga Rp 45.000 (otomatis match).
+3. [ ] Verifikasi apakah notifikasi masuk ke WA *Consumer*.
+4. [ ] *Consumer* membalas *BELI* via WA, memilih ongkir, dan mendapatkan link pembayaran Midtrans.
+5. [ ] Tampilan Web (Frontend) juga mendukung alur yang persis sama dari *MatchingPage* hingga pembayaran.
