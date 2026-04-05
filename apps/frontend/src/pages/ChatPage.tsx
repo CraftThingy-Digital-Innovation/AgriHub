@@ -29,6 +29,7 @@ import {
   Sparkles,
   FolderOpen
 } from 'lucide-react';
+import { useModalStore } from '../store/useModalStore';
 
 // Import api dari lib lokal Anda
 const api_placeholder = {
@@ -137,6 +138,7 @@ function TypingIndicator() {
 // ─── Main Chat UI Logic ───────────────────────────────────────────────────
 
 function ChatContainer() {
+  const { showAlert } = useModalStore();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -170,7 +172,7 @@ function ChatContainer() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      alert(`Berhasil memilih file: ${file.name}.`);
+      showAlert(`Berhasil memilih file: ${file.name}.`);
     }
   };
 

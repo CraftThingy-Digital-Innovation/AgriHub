@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { MapPin } from 'lucide-react';
+import { useModalStore } from '../store/useModalStore';
 import 'leaflet/dist/leaflet.css';
 import api from '../lib/api';
 
@@ -49,8 +50,9 @@ function ChangeView({ center }: { center: [number, number] }) {
   return null;
 }
 
-export default function MapPicker({ initialLat, initialLng, onLocationSelect }: MapPickerProps) {
-  const [pos, setPos] = useState<[number, number]>([initialLat || -6.200000, initialLng || 106.816666]);
+export default function MapPicker({ initialLat = -6.200000, initialLng = 106.816666, onLocationSelect }: MapPickerProps) {
+  const { showAlert } = useModalStore();
+  const [pos, setPos] = useState<[number, number]>([initialLat, initialLng]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -111,7 +113,7 @@ export default function MapPicker({ initialLat, initialLng, onLocationSelect }: 
 
   const handleMyLocation = () => {
     if (!navigator.geolocation) {
-      alert("Browser Anda tidak mendukung geolokasi");
+      showAlert("Browser Anda tidak mendukung geolokasi");
       return;
     }
     setLoading(true);
@@ -122,7 +124,7 @@ export default function MapPicker({ initialLat, initialLng, onLocationSelect }: 
       (error) => {
         setLoading(false);
         console.error("Geolocation Error:", error);
-        alert("Gagal mengambil lokasi. Pastikan izin akses lokasi diaktifkan.");
+        showAlert("Gagal mengambil lokasi. Pastikan izin akses lokasi diaktifkan.");
       },
       { enableHighAccuracy: true }
     );

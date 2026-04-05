@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import api from '../lib/api';
 import MapPicker from '../components/MapPicker';
 import { useAuthStore } from '../stores/authStore';
+import { useModalStore } from '../store/useModalStore';
 
 interface Product {
   id: string;
@@ -27,6 +28,7 @@ interface Product {
 
 export default function SellerPage() {
   const qc = useQueryClient();
+  const { showAlert, showConfirm } = useModalStore();
 
   const [showRegister, setShowRegister] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -72,7 +74,7 @@ export default function SellerPage() {
 
     const token = useAuthStore.getState().user?.puter_token;
     if (!token) {
-        alert('Anda harus memasukkan Token Puter di pengaturan chat untuk menggunakan upload gambar via Puter.');
+        showAlert('Anda harus memasukkan Token Puter di pengaturan chat untuk menggunakan upload gambar via Puter.');
         return;
     }
 
@@ -109,7 +111,7 @@ export default function SellerPage() {
         }));
     } catch (err: any) {
         console.error('Puter Upload Error:', err);
-        alert('Gagal mengunggah gambar ke Puter Cloud: ' + err.message);
+        showAlert('Gagal mengunggah gambar ke Puter Cloud: ' + err.message);
     } finally {
         setUploadingImage(false);
     }
@@ -428,9 +430,9 @@ export default function SellerPage() {
                       
                       {!activeStore?.is_main_branch && (
                           <button onClick={() => {
-                              if (confirm('Lanjutkan hapus cabang ini?')) {
+                              showConfirm('Lanjutkan hapus cabang ini?', () => {
                                   deleteStoreMutation.mutate(activeStore.id);
-                              }
+                              });
                           }} className="text-red-500 hover:text-red-700" title="Hapus Cabang"><Trash2 size={18} /></button>
                       )}
                   </h2>

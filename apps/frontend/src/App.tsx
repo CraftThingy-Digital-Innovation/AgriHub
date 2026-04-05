@@ -12,6 +12,7 @@ import OrdersPage from './pages/OrdersPage';
 import WalletPage from './pages/WalletPage';
 import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
+import { GlobalModals } from './components/GlobalModals';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore(s => s.token);
@@ -29,6 +30,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <GlobalModals />
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />

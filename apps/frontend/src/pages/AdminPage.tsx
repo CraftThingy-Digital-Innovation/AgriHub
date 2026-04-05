@@ -10,6 +10,7 @@ import {
   Store, Leaf, BadgeDollarSign, Activity, CheckCircle2, 
   Smartphone, Trash2, Globe, Lock, Search, Plus, Play, RefreshCw, Link as LinkIcon
 } from 'lucide-react';
+import { useModalStore } from '../store/useModalStore';
 
 type AdminTab = 'dashboard' | 'wa' | 'users' | 'rag' | 'komoditas' | 'migration';
 
@@ -316,6 +317,7 @@ function WATab() {
 // ─── Users ─────────────────────────────────────────────────────────────────
 
 function UsersTab({ qc }: { qc: ReturnType<typeof useQueryClient> }) {
+  const { showConfirm } = useModalStore();
   const [search, setSearch] = useState('');
   const { data } = useQuery({
     queryKey: ['admin-users', search],
@@ -390,7 +392,7 @@ function UsersTab({ qc }: { qc: ReturnType<typeof useQueryClient> }) {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button 
-                    onClick={() => { if (confirm(`Hapus permanen user ${u.name}?`)) deleteMut.mutate(u.id); }}
+                    onClick={() => { showConfirm(`Hapus permanen user ${u.name}?`, () => { deleteMut.mutate(u.id); }); }}
                     className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors inline-flex"
                     title="Hapus User"
                   >
@@ -414,6 +416,7 @@ function UsersTab({ qc }: { qc: ReturnType<typeof useQueryClient> }) {
 // ─── RAG Docs ─────────────────────────────────────────────────────────────
 
 function RagTab({ qc }: { qc: ReturnType<typeof useQueryClient> }) {
+  const { showConfirm } = useModalStore();
   const { data } = useQuery({ queryKey: ['admin-rag'], queryFn: () => api.get('/admin/rag-docs').then(r => r.data.data as RagDoc[]) });
   const toggleMut = useMutation({
     mutationFn: ({ id, is_global }: { id: string; is_global: boolean }) => api.patch(`/admin/rag-docs/${id}/global`, { is_global }),
@@ -465,7 +468,7 @@ function RagTab({ qc }: { qc: ReturnType<typeof useQueryClient> }) {
                 {d.is_global ? 'Global' : 'Private'}
               </button>
               <button 
-                onClick={() => { if (confirm('Hapus permanen dokumen ini beserta vektor datanya?')) deleteMut.mutate(d.id); }}
+                onClick={() => { showConfirm('Hapus permanen dokumen ini beserta vektor datanya?', () => { deleteMut.mutate(d.id); }); }}
                 className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
                 title="Hapus Dokumen"
               >

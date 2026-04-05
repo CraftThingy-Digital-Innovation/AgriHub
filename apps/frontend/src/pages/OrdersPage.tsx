@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Package, Inbox, CreditCard, Truck, Search } from "lucide-react";
 import api from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
+import { useModalStore } from '../store/useModalStore';
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   pending:    { label: 'Menunggu Bayar', cls: 'badge-amber' },
@@ -18,6 +19,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 export default function OrdersPage() {
   const user = useAuthStore(s => s.user);
   const qc = useQueryClient();
+  const { showAlert, showConfirm } = useModalStore();
 
   const { data, isLoading } = useQuery({
     queryKey: ['orders'],
@@ -32,15 +34,15 @@ export default function OrdersPage() {
         window.location.href = res.data.redirect_url;
       }
     },
-    onError: (err: any) => alert(err.response?.data?.error || 'Gagal menyiapkan pembayaran')
+    onError: (err: any) => showAlert(err.response?.data?.error || 'Gagal menyiapkan pembayaran')
   });
 
   const trackMutation = useMutation({
     mutationFn: (waybill: string) => api.get(`/shipping/track/${waybill}?courier=jne`).then(r => r.data),
     onSuccess: (res: any) => {
-      alert(`Status Pengiriman: ${res.data?.status || 'Tidak diketahui'}\nLokasi: ${res.data?.history?.[0]?.note || 'Tracking kosong'}`);
+      showAlert(`Status Pengiriman: ${res.data?.status || 'Tidak diketahui'}\nLokasi: ${res.data?.history?.[0]?.note || 'Tracking kosong'}`);
     },
-    onError: () => alert('Gagal melacak pengiriman')
+    onError: () => showAlert('Gagal melacak pengiriman')
   });
 
   const cancelMutation = useMutation({
@@ -48,7 +50,7 @@ export default function OrdersPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
     },
-    onError: (err: any) => alert(err.response?.data?.error || 'Gagal membatalkan pesanan')
+    onError: (err: any) => showAlert(err.response?.data?.error || 'Gagal membatalkan pesanan')
   });
 
   return (
@@ -134,9 +136,9 @@ export default function OrdersPage() {
                       <>
                         <button
                           onClick={() => {
-                            if (confirm('Yakin ingin membatalkan pesanan ini?')) {
+                            showConfirm('Yakin ingin membatalkan pesanan ini?', () => {
                               cancelMutation.mutate(String(order.id));
-                            }
+                            });
                           }}
                           disabled={cancelMutation.isPending}
                           className="flex items-center gap-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold transition shadow-sm"
@@ -159,7 +161,7 @@ export default function OrdersPage() {
                     {/* Seller: Proses Pengiriman (Dummy simulasi) */}
                     {isSeller && order.status === 'dibayar' && (
                       <button
-                        onClick={() => alert(`Harap gunakan layanan Biteship API /api/shipping/book untuk order ini (ID: ${order.id})`)}
+                        onClick={() => showAlert(`Harap gunakan layanan Biteship API /api/shipping/book untuk order ini (ID: ${order.id})`)}
                         className="flex items-center gap-1 text-[10px] bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm"
                       >
                         <Truck size={12} /> KIRIM

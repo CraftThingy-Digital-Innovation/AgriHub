@@ -58,7 +58,7 @@ export default function PriceMonitorPage() {
 
   useEffect(() => {
     if (latestDateData?.date && !selectedDate) {
-      setSelectedDate(latestDateData.date);
+      setSelectedDate(String(latestDateData.date).slice(0, 10));
     }
   }, [latestDateData, selectedDate]);
 
@@ -205,11 +205,16 @@ export default function PriceMonitorPage() {
           <div className="flex-1 min-w-[160px]">
             <label className="block text-xs font-semibold text-gray-500 mb-1">TANGGAL (PIHPS)</label>
             <input
-              type="date"
-              className="input-field w-full h-10 text-sm"
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-            />
+               className="input-field w-full h-10 text-sm cursor-pointer px-2"
+               type="text"
+               placeholder="hari/bulan/tahun"
+               onFocus={(e) => (e.target.type = 'date')}
+               onBlur={(e) => {
+                 if (!e.target.value) e.target.type = 'text';
+               }}
+               value={selectedDate}
+               onChange={e => setSelectedDate(e.target.value)}
+             />
           </div>
 
           <div className="flex-1 min-w-[160px]">

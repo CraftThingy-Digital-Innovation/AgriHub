@@ -7,9 +7,12 @@ import api from '../lib/api';
 import logo from '../assets/agrihub-logo.png';
 import MapPicker from '../components/MapPicker';
 import { MapPin } from 'lucide-react';
+import { useAuthStore } from '../stores/authStore';
+import { useModalStore } from '../store/useModalStore';
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const { showAlert } = useModalStore();
   const qc = useQueryClient();
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -81,7 +84,7 @@ export default function MarketplacePage() {
         navigate('/app/pesanan');
     },
     onError: (err: any) => {
-        alert(err.response?.data?.error || 'Gagal membuat pesanan');
+        showAlert(err.response?.data?.error || 'Gagal membuat pesanan');
     }
   });
 
@@ -470,11 +473,11 @@ export default function MarketplacePage() {
                               const sel = addressData?.find((a: any) => a.id === selectedAddressId);
                               if (sel) finalAddressPayload = `ALAMAT_SISTEM:[${sel.id}] ${sel.label} - ${sel.recipient_name} | ${sel.full_address}`;
                           } else {
-                              alert("Harap pilih atau tambah alamat pengiriman!");
+                              showAlert("Harap pilih atau tambah alamat pengiriman!");
                               return;
                           }
                           if (!selectedShipping) {
-                              alert("Harap tunggu atau pilih ongkos kirim!");
+                              showAlert("Harap tunggu atau pilih ongkos kirim!");
                               return;
                           }
 
