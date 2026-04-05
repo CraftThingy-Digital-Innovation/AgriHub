@@ -41,7 +41,7 @@ export default function PriceMonitorPage() {
   const [selectedKomoditas, setSelectedKomoditas] = useState('');
   const [showPredict, setShowPredict] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
-  const [selectedMarketType, setSelectedMarketType] = useState('3'); // Default e.g. Eceran
+  const [selectedMarketType, setSelectedMarketType] = useState(''); // Default Semua Pasar
   const [selectedProvDetail, setSelectedProvDetail] = useState<{prov: string, price: number} | null>(null);
   
   const qc = useQueryClient();
@@ -186,9 +186,10 @@ export default function PriceMonitorPage() {
                     onChange={e => setSelectedMarketType(e.target.value)}
                 >
                     <option value="">Semua Pasar</option>
-                    <option value="1">Pasar Produsen</option>
-                    <option value="2">Pasar Grosir</option>
-                    <option value="3">Pasar Eceran</option>
+                    <option value="1">Pasar Tradisional</option>
+                    <option value="2">Pasar Modern</option>
+                    <option value="3">Pasar Grosir</option>
+                    <option value="4">Pasar Produsen</option>
                 </select>
             </div>
           </div>
