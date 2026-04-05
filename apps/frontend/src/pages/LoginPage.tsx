@@ -407,7 +407,7 @@ export default function LoginPage() {
             {step === 'identifier' && (
               <motion.div key="identifier" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <form onSubmit={handleCheckIdentifier} className="space-y-5">
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">
                       Nomor HP, Username, atau Email
                     </label>
@@ -419,6 +419,12 @@ export default function LoginPage() {
                         value={form.identifier}
                         onChange={set('identifier')}
                         required autoFocus />
+                    </div>
+                    <div className="flex justify-end mt-1">
+                      <button type="button" onClick={() => setStep('forgot_password')}
+                        className="text-xs font-bold text-green-700 hover:text-green-900 transition-colors mr-1">
+                        Lupa password?
+                      </button>
                     </div>
                   </div>
 
