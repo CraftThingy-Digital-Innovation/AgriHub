@@ -194,7 +194,17 @@ export default function LoginPage() {
       });
       if (data.success) {
         setAuth(data.data.user, data.data.token);
-        navigate(getRedirectUrl());
+        if (data.data.needs_phone_verify) {
+          await api.post('/auth/send-phone-otp');
+          setStep('otp');
+          setSuccess('Mohon verifikasi nomor HP Anda.');
+        } else if (data.data.needs_email_verify) {
+          await api.post('/auth/send-email-otp');
+          setStep('email_otp');
+          setSuccess('Mohon verifikasi email Anda.');
+        } else {
+          navigate(getRedirectUrl());
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login gagal');
