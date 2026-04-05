@@ -133,40 +133,42 @@ export default function PriceMonitorPage() {
         <NationalPriceMap data={mapDataRaw?.data || []} onProvinceClick={(prov) => console.log('Clicked:', prov)} />
       </motion.div>
 
-      {/* 🔥 CHART */}
-      {selectedKomoditas && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card">
+      {/* 🔥 CHART LOKAL AGRIHUB */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-semibold text-green-900">Riwayat Harga Lokal (AgriHub)</h2>
 
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-green-900">Grafik Harga</h2>
+          <button
+            onClick={() => setShowPredict(!showPredict)}
+            className={showPredict ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+            disabled={!selectedKomoditas}
+          >
+            {showPredict ? '🔮 Aktif' : '🔮 Prediksi'}
+          </button>
+        </div>
 
-            <button
-              onClick={() => setShowPredict(!showPredict)}
-              className={showPredict ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
-            >
-              {showPredict ? '🔮 Aktif' : '🔮 Prediksi'}
-            </button>
+        {!selectedKomoditas ? (
+          <div className="text-center py-10 text-green-500">
+            Silakan pilih komoditas di atas untuk melihat riwayat harga lokal.
           </div>
-
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="actual" stroke="#2D6A4F" />
-                {showPredict && <Line type="monotone" dataKey="prediksi" stroke="#f5c242" />}
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="text-center py-10 text-green-500">
-              Belum ada data harga
-            </div>
-          )}
-        </motion.div>
-      )}
+        ) : chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="actual" name="Harga Asli" stroke="#2D6A4F" />
+              {showPredict && <Line type="monotone" dataKey="prediksi" name="Prediksi AI" stroke="#f5c242" />}
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="text-center py-10 text-green-500">
+            Belum ada riwayat harga dilaporkan untuk komoditas ini.
+          </div>
+        )}
+      </motion.div>
 
       {/* 🔥 GRID FIX RAPI */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
