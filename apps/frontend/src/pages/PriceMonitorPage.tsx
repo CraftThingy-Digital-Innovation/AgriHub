@@ -40,6 +40,10 @@ interface KomoditasItem {
 export default function PriceMonitorPage() {
   const [selectedKomoditas, setSelectedKomoditas] = useState('');
   const [showPredict, setShowPredict] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedMarketType, setSelectedMarketType] = useState('3'); // Default e.g. Eceran
+  const [selectedProvDetail, setSelectedProvDetail] = useState<{prov: string, price: number} | null>(null);
+  
   const qc = useQueryClient();
 
   const { data: komoditasData } = useQuery({
@@ -67,8 +71,14 @@ export default function PriceMonitorPage() {
   });
 
   const { data: mapDataRaw } = useQuery({
-    queryKey: ['pihps-map-data', selectedKomoditas],
-    queryFn: () => api.get(`/pihps/map-data${selectedKomoditas ? `?commodity=${selectedKomoditas}` : ''}`).then(r => r.data),
+    queryKey: ['pihps-map-data', selectedKomoditas, selectedDate, selectedMarketType],
+    queryFn: () => {
+        const queryParams = new URLSearchParams();
+        if (selectedKomoditas) queryParams.append('commodity', selectedKomoditas);
+        if (selectedDate) queryParams.append('date', selectedDate);
+        if (selectedMarketType) queryParams.append('marketType', selectedMarketType);
+        return api.get(`/pihps/map-data?${queryParams.toString()}`).then(r => r.data);
+    },
   });
 
   const reportMutation = useMutation({
@@ -111,27 +121,78 @@ export default function PriceMonitorPage() {
           </div>
         </div>
 
-        {/* 🔥 DROPDOWN DIPERKECIL */}
-        <select
-          className="input-field w-40 md:w-52 h-10 text-sm"
-          value={selectedKomoditas}
-          onChange={(e) => {
-            setSelectedKomoditas(e.target.value);
-            setShowPredict(false);
-          }}
-        >
-          <option value="">Pilih Komoditas</option>
-          {komoditasList.map(k => (
-            <option key={k.id} value={k.id}>{k.nama}</option>
-          ))}
-        </select>
-
       </div>
 
-      {/* 🔥 NATIONAL PRICE MAP */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
-        <NationalPriceMap data={mapDataRaw?.data || []} onProvinceClick={(prov) => console.log('Clicked:', prov)} />
-      </motion.div>
+      <div className="flex flex-col mb-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <NationalPriceMap 
+                data={mapDataRaw?.data || []} 
+                onProvinceClick={(prov) => {
+                    const found = (mapDataRaw?.data || []).find((d: any) => d.prov_name.toUpperCase().includes(prov));
+                    setSelectedProvDetail({ prov, price: found ? found.aggregate_price : 0 });
+                }} 
+            />
+          </motion.div>
+          
+          {selectedProvDetail && (
+             <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center shadow-sm">
+                <div>
+                    <h3 className="font-bold text-green-900 text-lg">{selectedProvDetail.prov}</h3>
+                    <p className="text-sm text-green-700">Data Peta Terbaru</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-2xl font-bold text-green-600">
+                        {selectedProvDetail.price > 0 ? `Rp${selectedProvDetail.price.toLocaleString('id-ID')}/Kg` : 'Data Tidak Tersedia'}
+                    </p>
+                </div>
+             </div>
+          )}
+
+          {/* 🔥 FILTER PANEL UNTUK MAP PIHPS & AGRIHUB */}
+          <div className="mt-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex flex-wrap gap-4 items-end">
+            <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">KOMODITAS</label>
+                <select
+                  className="input-field w-full h-10 text-sm"
+                  value={selectedKomoditas}
+                  onChange={(e) => {
+                    setSelectedKomoditas(e.target.value);
+                    setShowPredict(false);
+                    setSelectedProvDetail(null);
+                  }}
+                >
+                  <option value="">Semua Komoditas / Pilih...</option>
+                  {komoditasList.map(k => (
+                    <option key={k.id} value={k.id}>{k.nama}</option>
+                  ))}
+                </select>
+            </div>
+            
+            <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">TANGGAL (PIHPS)</label>
+                <input 
+                    type="date" 
+                    className="input-field w-full h-10 text-sm" 
+                    value={selectedDate}
+                    onChange={e => setSelectedDate(e.target.value)}
+                />
+            </div>
+
+            <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">TIPE PASAR (PIHPS)</label>
+                <select 
+                    className="input-field w-full h-10 text-sm"
+                    value={selectedMarketType}
+                    onChange={e => setSelectedMarketType(e.target.value)}
+                >
+                    <option value="">Semua Pasar</option>
+                    <option value="1">Pasar Produsen</option>
+                    <option value="2">Pasar Grosir</option>
+                    <option value="3">Pasar Eceran</option>
+                </select>
+            </div>
+          </div>
+      </div>
 
       {/* 🔥 CHART LOKAL AGRIHUB */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card">
