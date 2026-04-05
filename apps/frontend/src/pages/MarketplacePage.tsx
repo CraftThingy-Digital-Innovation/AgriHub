@@ -12,6 +12,7 @@ export default function MarketplacePage() {
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [address, setAddress] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   const { data, isLoading } = useQuery({
@@ -145,6 +146,7 @@ export default function MarketplacePage() {
                           onClick={() => {
                             setSelectedProduct(product);
                             setQuantity(product.min_order || 1);
+                            setAddress('');
                             setNotes('');
                           }}
                           className="text-[10px] bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold transition"
@@ -254,12 +256,25 @@ export default function MarketplacePage() {
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">
+                    Alamat Pengiriman (Wajib)
+                  </label>
+                  <textarea 
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl resize-none h-20 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none"
+                    placeholder="Masukkan alamat pengiriman lengkap (Kecamatan, Kota, Kode Pos)"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">
                     Catatan untuk Penjual (Opsional)
                   </label>
                   <textarea 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full input-field resize-none h-20 text-sm"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl resize-none h-16 text-sm focus:ring-2 focus:ring-green-400 focus:outline-none"
                     placeholder="Contoh: Tolong pilihkan yang merah-merah ya pak..."
                   />
                 </div>
@@ -276,9 +291,9 @@ export default function MarketplacePage() {
                   onClick={() => orderMutation.mutate({ 
                     product_id: selectedProduct.id, 
                     quantity, 
-                    notes 
+                    notes: `[Alamat Pengiriman]: ${address}\n\n[Catatan]: ${notes}` 
                   })}
-                  disabled={orderMutation.isPending || quantity < selectedProduct.min_order || quantity > selectedProduct.stock_quantity}
+                  disabled={orderMutation.isPending || !address.trim() || quantity < selectedProduct.min_order || quantity > selectedProduct.stock_quantity}
                   className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {orderMutation.isPending ? 'Memproses...' : 'Beli Sekarang'}
