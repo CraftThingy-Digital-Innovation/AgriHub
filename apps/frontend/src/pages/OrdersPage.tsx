@@ -40,7 +40,15 @@ export default function OrdersPage() {
     onSuccess: (res: any) => {
       alert(`Status Pengiriman: ${res.data?.status || 'Tidak diketahui'}\nLokasi: ${res.data?.history?.[0]?.note || 'Tracking kosong'}`);
     },
-    onError: (err) => alert('Gagal melacak pengiriman')
+    onError: () => alert('Gagal melacak pengiriman')
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (orderId: string) => api.patch(`/orders/${orderId}/status`, { status: 'dibatalkan' }).then(r => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (err: any) => alert(err.response?.data?.error || 'Gagal membatalkan pesanan')
   });
 
   return (
@@ -123,16 +131,29 @@ export default function OrdersPage() {
                   <div className="flex gap-2 mt-2">
                     {/* Buyer: Bayar */}
                     {isBuyer && (order.status === 'pending' || order.status === 'menunggu_bayar') && (
-                      <button
-                        onClick={() => {
-                          if (order.payment_url) window.location.href = String(order.payment_url);
-                          else payMutation.mutate(String(order.id));
-                        }}
-                        disabled={payMutation.isPending}
-                        className="flex items-center gap-1 text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm"
-                      >
-                        <CreditCard size={12} /> BAYAR
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            if (confirm('Yakin ingin membatalkan pesanan ini?')) {
+                              cancelMutation.mutate(String(order.id));
+                            }
+                          }}
+                          disabled={cancelMutation.isPending}
+                          className="flex items-center gap-1 text-[10px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold transition shadow-sm"
+                        >
+                          BATAL
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (order.payment_url) window.location.href = String(order.payment_url);
+                            else payMutation.mutate(String(order.id));
+                          }}
+                          disabled={payMutation.isPending}
+                          className="flex items-center gap-1 text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold transition shadow-sm"
+                        >
+                          <CreditCard size={12} /> BAYAR
+                        </button>
+                      </>
                     )}
 
                     {/* Seller: Proses Pengiriman (Dummy simulasi) */}
