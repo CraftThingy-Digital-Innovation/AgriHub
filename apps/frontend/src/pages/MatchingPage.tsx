@@ -14,6 +14,7 @@ import {
 interface KomoditasItem { id: string; nama: string; kategori: string; }
 interface MatchRecord {
   id: string;
+  product_id: string;
   product_name: string;
   demand_qty: number;
   product_price: number;
@@ -185,13 +186,25 @@ export default function MatchingPage() {
                         <div className="font-bold text-2xl text-green-600 tracking-tight">
                           Rp{m.product_price.toLocaleString('id-ID')}<span className="text-sm text-gray-500 font-normal">/kg</span>
                         </div>
-                        <a 
-                          href={`https://wa.me/${(import.meta as any).env.VITE_WA_BOT_NUMBER}?text=BELI%20${m.id}`}
-                          target="_blank" rel="noreferrer"
-                          className="mt-3 flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold transition"
-                        >
-                           Beli via WA <ArrowRight size={14} />
-                        </a>
+                        <div className="flex gap-2 mt-3">
+                          <a 
+                            href={
+                              (import.meta as any).env.VITE_WA_BOT_NUMBER 
+                              ? `https://wa.me/${(import.meta as any).env.VITE_WA_BOT_NUMBER}?text=BELI%20${m.id}`
+                              : `https://api.whatsapp.com/send?text=BELI%20${m.id}`
+                            }
+                            target="_blank" rel="noreferrer"
+                            className="flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold transition"
+                          >
+                             Beli via WA
+                          </a>
+                          <a 
+                            href={`/app/marketplace?buy=${m.product_id}`}
+                            className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-full text-sm font-semibold transition"
+                          >
+                             Beli Langsung <ArrowRight size={14} />
+                          </a>
+                        </div>
                       </div>
 
                     </div>

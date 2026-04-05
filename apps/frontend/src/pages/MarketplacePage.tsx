@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingCart, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
 import logo from '../assets/agrihub-logo.png';
 import MapPicker from '../components/MapPicker';
@@ -12,6 +12,7 @@ import { useModalStore } from '../store/useModalStore';
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { showAlert } = useModalStore();
   const qc = useQueryClient();
 
@@ -45,6 +46,20 @@ export default function MarketplacePage() {
     queryKey: ['products'],
     queryFn: () => api.get('/products').then(r => r.data),
   });
+
+  // Effect auto-open product from URL parameter
+  useEffect(() => {
+    const buyId = searchParams.get('buy');
+    if (buyId && data?.data) {
+      const p = data.data.find((x: any) => x.id === buyId);
+      if (p) {
+        setSelectedProduct(p);
+        setQuantity(p.min_order || 1);
+        searchParams.delete('buy');
+        setSearchParams(searchParams);
+      }
+    }
+  }, [searchParams, data, setSearchParams]);
 
   // Effect fetch ongkir
   useEffect(() => {
