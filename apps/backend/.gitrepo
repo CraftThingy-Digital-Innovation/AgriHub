@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/CraftThingy-Digital-Innovation/AgriHub-backend.git
 	branch = main
-	commit = 11ea72187343a1bde14e2ffc116ac09a1692ab32
+	commit = 83f9a229aca0056756bbf0c19ae68c9e7e3ad285
 	method = merge
 	cmdver = 0.4.9
-	parent = a7cdbaff2723d39861be5763ae8926d725cba243
+	parent = b233195cc76faa52386556cda0cdebb8cd6a38f8
