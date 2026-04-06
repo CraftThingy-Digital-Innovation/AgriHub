@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
+import { useModalStore } from '../store/useModalStore';
 import logo from '../assets/agrihub-logo.png';
 
 // ✅ LUCIDE ICONS
@@ -30,6 +31,7 @@ const navItems = [
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
+  const { showProfile } = useModalStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -147,15 +149,18 @@ export default function DashboardLayout() {
 
         {/* USER PROFILE */}
         <div className="p-3 border-t border-green-100">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-green-50">
+          <div 
+            onClick={showProfile}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl bg-green-50 hover:bg-green-100 cursor-pointer shadow-sm active:scale-95 transition-all group/profile"
+          >
 
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-600 to-green-400 flex items-center justify-center text-white font-bold">
               {user?.name?.charAt(0) || '?'}
             </div>
 
-            <div className="flex-1">
-              <div className="text-sm font-semibold text-green-900 truncate">{user?.name}</div>
-              <div className="text-xs text-green-600 capitalize">{user?.role}</div>
+            <div className="flex-1 overflow-hidden">
+              <div className="text-sm font-bold text-green-900 truncate group-hover/profile:text-emerald-700 transition-colors">{user?.name}</div>
+              <div className="text-[10px] text-green-600 font-bold uppercase tracking-wider opacity-60">@{user?.username || user?.role}</div>
             </div>
 
             <button

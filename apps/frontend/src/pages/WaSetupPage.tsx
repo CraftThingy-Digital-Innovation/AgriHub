@@ -74,7 +74,7 @@ export default function WaSetupPage() {
   const sessionId = searchParams.get('session');
 
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('loading');
-  const [sessionData, setSessionData] = useState<{ purpose: string; phone?: string; userName?: string } | null>(null);
+  const [sessionData, setSessionData] = useState<{ purpose: string; phone?: string; userName?: string; lid?: string } | null>(null);
   const [step, setStep] = useState<SetupStep>('idle');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -86,6 +86,8 @@ export default function WaSetupPage() {
   const [email, setEmail] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const { setAuth, updateUser } = useAuthStore();
   const token = useAuthStore(s => s.token);
@@ -116,8 +118,16 @@ export default function WaSetupPage() {
       const puter_name     = puterUser.username || puterUser.email;
       const puter_email    = puterUser.email;
 
+      // Validation check: if no phone in session AND no manual phone provided yet
+      if (!sessionData?.phone && !manualPhone && sessionData?.purpose === 'full-setup') {
+        setPhoneError('Nomor HP wajib diisi untuk pendaftaran baru');
+        setStep('idle');
+        return;
+      }
+
       const { data } = await api.post(`/auth/wa-magic-session/${sessionId}/complete`, {
         puter_token, puter_user_id, puter_name, puter_email,
+        phone: manualPhone || undefined
       });
 
       // Simpan auth token agar endpoint berikutnya (set-password) bisa pakai requireAuth
@@ -247,10 +257,40 @@ export default function WaSetupPage() {
                   <div className="text-4xl mb-2">{pInfo.icon}</div>
                   <h2 className="font-black text-green-900 text-lg">{pInfo.title}</h2>
                   <p className="text-green-600 text-sm mt-1">{pInfo.sub}</p>
-                  {sessionData?.phone && (
+                  {sessionData?.phone ? (
                     <div className="mt-3 flex items-center justify-center gap-2 text-sm text-green-700">
                       <Phone size={14} />
                       <span className="font-bold">{sessionData.phone}</span>
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-3 text-left">
+                       <div className="p-3 bg-white/50 border border-amber-200 rounded-xl text-amber-950">
+                          <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                             <Shield size={12} /> ID WhatsApp Terdeteksi
+                          </p>
+                          <p className="text-sm font-mono font-bold mt-0.5">{sessionData?.lid?.split('@')[0] || 'Unknown ID'}</p>
+                       </div>
+
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-green-800 uppercase tracking-widest ml-1">Konfirmasi Nomor WhatsApp Anda *</label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-4 flex items-center text-green-600"><Phone size={18} /></div>
+                            <input 
+                              type="tel"
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-green-900"
+                              placeholder="08xxxxxxxxxx"
+                              value={manualPhone}
+                              onChange={e => { setManualPhone(e.target.value); setPhoneError(''); }}
+                            />
+                          </div>
+                       </div>
+                       
+                       {phoneError && <p className="text-red-500 text-[10px] font-bold ml-1">{phoneError}</p>}
+                       
+                       <p className="text-[10px] text-gray-500 leading-relaxed px-1">
+                         ⚠️ Karena pengaturan privasi WhatsApp Anda, nomor HP tidak terdeteksi otomatis. 
+                         Masukan nomor Anda yang terdaftar di AgriHub untuk **menautkan akun** (bukan membuat akun baru).
+                       </p>
                     </div>
                   )}
                 </div>

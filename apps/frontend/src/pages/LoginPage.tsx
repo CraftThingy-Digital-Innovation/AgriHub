@@ -6,7 +6,8 @@ import logo from '../assets/agrihub-logo.png';
 import api from '../lib/api';
 import {
   Phone, Lock, User, AtSign, Mail, ArrowRight, ChevronLeft,
-  Eye, EyeOff, CheckCircle2, XCircle, Loader2, AlertCircle, Shield
+  Eye, EyeOff, CheckCircle2, XCircle, Loader2, AlertCircle, Shield,
+  Sparkles, Database
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,6 +21,7 @@ type FlowStep =
   | 'forgot_password' // Lupa password: kirim OTP
   | 'reset_otp'      // Verifikasi OTP reset
   | 'reset_password' // Set password baru
+  | 'puter_connect'  // Mandatory Puter link
   | 'success';
 
 interface FormState {
@@ -128,18 +130,24 @@ export default function LoginPage() {
     if (token && user) {
       const needsPhone = !user.phone_verified;
       const needsEmail = user.email && !user.email_verified;
+      const needsPuter = !user.puter_token;
 
-      if (!needsPhone && !needsEmail) {
+      if (!needsPhone && !needsEmail && !needsPuter) {
         navigate('/app', { replace: true });
       } else {
         if (needsPhone) setStep('otp');
         else if (needsEmail) {
           api.post('/auth/send-email-otp').catch(() => {});
           setStep('email_otp');
+        } else if (needsPuter) {
+          setStep('puter_connect');
         }
       }
     }
-  }, []);
+    // Handle external redirection from ProtectedRoute
+    const stepParam = searchParams.get('step');
+    if (stepParam === 'puter') setStep('puter_connect');
+  }, [searchParams]);
 
   // Username realtime check
   useEffect(() => {
@@ -298,11 +306,20 @@ export default function LoginPage() {
       const puter_email = puterUser.email;
       const puter_username = puterUser.username;
 
+      const headers: any = {};
+      const currentToken = useAuthStore.getState().token;
+      if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
+
       const { data } = await api.post('/auth/login-puter', {
         puter_token, puter_user_id, puter_name, puter_email, puter_username,
-      });
+      }, { headers });
 
       if (data.success) {
+        if (data.data.linked) {
+          updateUser(data.data.user);
+          navigate(getRedirectUrl());
+          return;
+        }
         setAuth(data.data.user, data.data.token);
         if (data.data.needs_phone) {
           setIsPuterFlow(true);
@@ -746,6 +763,81 @@ export default function LoginPage() {
                     Kirim Ulang Kode Email
                   </button>
                 </form>
+              </motion.div>
+            )}
+
+            {/* ── STEP: puter_connect (Mandatory) ────────────────────────── */}
+            {step === 'puter_connect' && (
+              <motion.div key="puter_connect" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="space-y-6">
+                <div className="text-center space-y-4">
+                  <div className="relative inline-block">
+                    <motion.div 
+                      animate={{ 
+                        scale: [1, 1.05, 1],
+                        rotate: [0, 2, -2, 0]
+                      }}
+                      transition={{ 
+                        duration: 4, 
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="w-24 h-24 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl text-white relative z-10"
+                    >
+                      <Shield size={44} />
+                    </motion.div>
+                    <div className="absolute inset-0 bg-purple-500 rounded-[2.5rem] blur-2xl opacity-20 animate-pulse" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h2 className="font-black text-slate-900 text-2xl tracking-tight">Koneksi AI Diperlukan</h2>
+                    <p className="text-sm text-slate-500 font-medium px-4">
+                      Satu langkah lagi! Hubungkan akun <span className="text-indigo-600 font-bold">Puter.com</span> Anda untuk mengaktifkan fitur AsistenTani.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 px-2">
+                  {[
+                    { icon: <Sparkles size={16} />, text: 'Akses fitur AI AsistenTani 24/7' },
+                    { icon: <Database size={16} />, text: 'Knowledge Base untuk dokumen Anda' },
+                    { icon: <Lock size={16} />, text: 'Keamanan data terjamin oleh Puter.js' }
+                  ].map((item, i) => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      transition={{ delay: i * 0.1 }}
+                      key={i} 
+                      className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-bold text-slate-600"
+                    >
+                      <div className="text-indigo-500 bg-white p-1.5 rounded-lg shadow-sm">{item.icon}</div>
+                      {item.text}
+                    </motion.div>
+                  ))}
+                </div>
+
+                {error && (
+                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-3 text-red-600">
+                    <AlertCircle size={18} className="flex-shrink-0" />
+                    <p className="text-[11px] font-bold leading-tight">{error}</p>
+                  </motion.div>
+                )}
+
+                <div className="space-y-3 pt-2">
+                  <button 
+                    onClick={handlePuterLogin} 
+                    disabled={loading}
+                    className="w-full py-4.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white rounded-2xl font-black text-lg shadow-[0_15px_30px_rgba(79,70,229,0.3)] hover:shadow-[0_20px_40px_rgba(79,70,229,0.4)] transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                  >
+                    {loading ? <Loader2 className="animate-spin" size={24} /> : <><Shield size={22} /> Hubungkan Sekarang</>}
+                  </button>
+                  
+                  <button 
+                    onClick={() => { useAuthStore.getState().logout(); setStep('identifier'); }} 
+                    className="w-full py-3 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    Gunakan Akun AgriHub Lain
+                  </button>
+                </div>
               </motion.div>
             )}
 

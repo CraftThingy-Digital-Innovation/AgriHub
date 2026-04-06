@@ -13,10 +13,15 @@ interface ModalState {
     onConfirm: () => void;
     onCancel: () => void;
   };
+  profile: {
+    isOpen: boolean;
+  };
   showAlert: (message: string, title?: string) => void;
   showConfirm: (message: string, onConfirm: () => void, title?: string) => void;
+  showProfile: () => void;
   closeAlert: () => void;
   closeConfirm: () => void;
+  closeProfile: () => void;
 }
 
 export const useModalStore = create<ModalState>((set) => ({
@@ -28,6 +33,7 @@ export const useModalStore = create<ModalState>((set) => ({
     onConfirm: () => {},
     onCancel: () => {},
   },
+  profile: { isOpen: false },
   showAlert: (message, title = 'Informasi') =>
     set({ alert: { isOpen: true, message, title } }),
   showConfirm: (message, onConfirm, title = 'Konfirmasi') =>
@@ -40,6 +46,8 @@ export const useModalStore = create<ModalState>((set) => ({
         onCancel: () => set((state) => ({ confirm: { ...state.confirm, isOpen: false } })),
       },
     }),
+  showProfile: () => set({ profile: { isOpen: true } }),
   closeAlert: () => set((state) => ({ alert: { ...state.alert, isOpen: false } })),
   closeConfirm: () => set((state) => ({ confirm: { ...state.confirm, isOpen: false } })),
+  closeProfile: () => set({ profile: { isOpen: false } }),
 }));

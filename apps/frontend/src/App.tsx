@@ -22,9 +22,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Enforce verification: Nominal phone and email MUST be verified
   const needsPhoneVerify = user && !user.phone_verified;
   const needsEmailVerify = user && user.email && !user.email_verified;
+  const needsPuterVerify = user && !user.puter_token;
 
-  if (needsPhoneVerify || needsEmailVerify) {
-    return <Navigate to="/login?step=verify" replace />;
+  if (needsPhoneVerify || needsEmailVerify || needsPuterVerify) {
+    const params = new URLSearchParams();
+    if (needsPhoneVerify || needsEmailVerify) params.set('step', 'verify');
+    else if (needsPuterVerify) params.set('step', 'puter');
+    
+    return <Navigate to={`/login?${params.toString()}`} replace />;
   }
 
   return <>{children}</>;

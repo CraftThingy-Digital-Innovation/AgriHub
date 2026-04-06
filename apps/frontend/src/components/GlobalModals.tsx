@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalStore } from '../store/useModalStore';
+import { ProfileModal } from './ProfileModal';
 
 export const GlobalModals: React.FC = () => {
-  const { alert, confirm, closeAlert, closeConfirm } = useModalStore();
+  const { alert, confirm, profile, closeAlert, closeConfirm } = useModalStore();
 
   return (
     <AnimatePresence>
@@ -64,6 +65,8 @@ export const GlobalModals: React.FC = () => {
           </motion.div>
         </div>
       )}
+      {/* Profile Modal */}
+      {profile.isOpen && <ProfileModal />}
     </AnimatePresence>
   );
 };

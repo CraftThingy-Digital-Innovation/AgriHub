@@ -154,12 +154,12 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex justify-between mt-4">
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-lg">
-                  AI Aktif
+                <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${user?.puter_token ? 'bg-white/20 text-white' : 'bg-red-500 text-white animate-pulse'}`}>
+                  {user?.puter_token ? 'AI Aktif' : 'AI Belum Terhubung'}
                 </span>
 
                 <span className="text-sm font-semibold">
-                  Tanya AI →
+                  {user?.puter_token ? 'Tanya AI →' : 'Hubungkan →'}
                 </span>
               </div>
             </div>
