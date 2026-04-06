@@ -128,11 +128,13 @@ export default function LoginPage() {
   useEffect(() => {
     const { token, user } = useAuthStore.getState();
     if (token && user) {
+      const isAdmin = user.role === 'admin';
       const needsPhone = !user.phone_verified;
       const needsEmail = user.email && !user.email_verified;
       const needsPuter = !user.puter_token;
 
-      if (!needsPhone && !needsEmail && !needsPuter) {
+      // Admin tidak butuh verifikasi ini
+      if (isAdmin || (!needsPhone && !needsEmail && !needsPuter)) {
         navigate('/app', { replace: true });
       } else {
         if (needsPhone) setStep('otp');
