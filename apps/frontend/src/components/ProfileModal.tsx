@@ -48,11 +48,12 @@ export const ProfileModal: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      // If phone or email changed, we handle that via OTP flow
+      // If phone or email changed, we handle that via OTP flow (Unless admin)
+      const isAdmin = user?.role === 'admin';
       const phoneChanged = formData.phone !== user?.phone;
       const emailChanged = formData.email !== user?.email;
 
-      if (phoneChanged || emailChanged) {
+      if (!isAdmin && (phoneChanged || emailChanged)) {
         const type = phoneChanged ? 'phone' : 'email';
         const value = phoneChanged ? formData.phone : formData.email;
         
@@ -62,11 +63,13 @@ export const ProfileModal: React.FC = () => {
           setStep('verify');
         }
       } else {
-        // Just basic update
+        // Just basic update (Admins can also update phone/email here)
         const { data } = await api.patch('/auth/profile', {
           name: formData.name,
           username: formData.username,
-          avatar_url: formData.avatar_url
+          avatar_url: formData.avatar_url,
+          phone: isAdmin ? formData.phone : undefined,
+          email: isAdmin ? formData.email : undefined
         });
         if (data.success) {
           updateUser(data.data.user);

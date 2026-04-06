@@ -20,9 +20,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!token) return <Navigate to="/login" replace />;
 
   // Enforce verification: Nominal phone and email MUST be verified
-  const needsPhoneVerify = user && !user.phone_verified;
-  const needsEmailVerify = user && user.email && !user.email_verified;
-  const needsPuterVerify = user && !user.puter_token;
+  const isNormalUser = user && user.role !== 'admin';
+  const needsPhoneVerify = isNormalUser && !user.phone_verified;
+  const needsEmailVerify = isNormalUser && user.email && !user.email_verified;
+  const needsPuterVerify = isNormalUser && !user.puter_token;
 
   if (needsPhoneVerify || needsEmailVerify || needsPuterVerify) {
     const params = new URLSearchParams();
